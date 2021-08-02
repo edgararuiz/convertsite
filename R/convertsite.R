@@ -43,6 +43,7 @@ list_all_files <- function(site_name = "db.rstudio.com",
 
 
 
+
 hold_function <- function()  {
   if(dir_exists("docs")) dir_delete("docs")
   dir_create("docs")
@@ -79,6 +80,18 @@ hold_function <- function()  {
   
   file_move("docs/_index.md", "docs/index.md")
 
+  
+  list_all_files() %>% 
+    head(10) %>% 
+    map(~{
+      fp <- str_locate(.x, "/static/")[[2]]
+      if(is.na(fp)) fp <- str_locate(.x, "/content/")[[2]]
+      dest <- str_sub(.x, fp + 1, nchar(.x))
+      list(
+        origin = .x,
+        destination = dest
+        )
+      })
 }
 
 
