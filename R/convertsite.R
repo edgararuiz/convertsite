@@ -1,0 +1,82 @@
+#' @importFrom purrr map map_chr
+#' @importFroms magrittr `%>%`
+#' @import stringr
+#' @import fs
+#' @import here
+
+#' @export
+clone_github_repo <- function(github_repo = "rstudio/db.rstudio.com",
+                              github_branch = "master", 
+                              package_folder = ".repos"
+                              ){
+  pr <- str_split(github_repo, "/")
+  pr <- pr[[1]][2]
+  repo <- path(package_folder, pr)
+  if(dir_exists(repo)) dir_delete(repo)
+  sys_command <- paste0("git clone -b ", github_branch," https://github.com/", github_repo, " ", repo)
+  system(sys_command)
+}
+
+
+
+hold_function <- function()  {
+  if(dir_exists("docs")) dir_delete("docs")
+  dir_create("docs")
+  
+  content_ls <- dir_ls("content", recurse = TRUE)
+  
+  rmd_list <- content_ls[str_detect(content_ls, ".Rmd") | str_detect(content_ls, ".md")]
+  
+  static_ls <- dir_ls("static", recurse = TRUE)
+  
+  remove_from_path <- function(file_list, remove_this) {
+    file_list %>% 
+      map(str_split, pattern = "/") %>% 
+      flatten() %>% 
+      map(~.x[.x != remove_this]) %>% 
+      map_chr(~ paste(.x, collapse = "/")) %>% 
+      as_fs_path()
+  }
+  
+  all_ls <-  as_fs_path(c(rmd_list, static_ls))
+  
+  all_ls <- all_ls[!str_detect(all_ls, "static/visualization/content")]
+  
+  all_folders <- all_ls[is_dir(all_ls)]
+  
+  all_files <- all_ls[is_file(all_ls)]
+  
+  clean_ls <- all_files %>% 
+    remove_from_path("content") %>% 
+    remove_from_path("static") %>% 
+    map_chr(~ path("docs", .x)) %>% 
+    as_fs_path()
+  
+  clean_ls %>% 
+    path_dir() %>% 
+    unique() %>% 
+    dir_create()
+  
+  seq_along(clean_ls) %>%
+    map(~file_copy(all_files[[.x]], clean_ls[[.x]]))
+  
+  file_move("docs/_index.md", "docs/index.md")
+  
+  bl_folders <- c("content", "public", "static", "layouts", "themes", "resources")
+  
+  map(
+    bl_folders, 
+    ~ file_move(.x, paste0(".", .x))
+  )
+  
+  quarto::quarto_serve()
+  
+  map(
+    bl_folders, 
+    ~ file_move(paste0(".", .x), .x)
+  )  
+}
+
+
+
+
