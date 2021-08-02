@@ -1,5 +1,5 @@
 #' @importFrom purrr map map_chr
-#' @importFroms magrittr `%>%`
+#' @importFrom magrittr `%>%`
 #' @import stringr
 #' @import fs
 #' @import here
@@ -17,6 +17,30 @@ clone_github_repo <- function(github_repo = "rstudio/db.rstudio.com",
   system(sys_command)
 }
 
+#' @export
+remove_from_path <- function(file_list, remove_this) {
+  file_list %>% 
+    map(str_split, pattern = "/") %>% 
+    flatten() %>% 
+    map(~.x[.x != remove_this]) %>% 
+    map_chr(~ paste(.x, collapse = "/")) %>% 
+    as_fs_path()
+}
+
+#' @export
+list_all_files <- function(site_name = "db.rstudio.com", 
+                           repo_folder = ".repos",
+                           ignore_html = TRUE
+                           ) {
+  base_folder <- path(repo_folder, site_name)
+  content_ls <- dir_ls(path(base_folder, "content"), recurse = TRUE)
+  static_ls <- dir_ls(path(base_folder, "static"), recurse = TRUE)
+  all_ls <- c(content_ls, static_ls)
+  all_files <- all_ls[is_file(all_ls)]
+  if(ignore_html) all_files <- all_files[path_ext(all_files) != "html"]
+  as_fs_path(all_files)
+}
+
 
 
 hold_function <- function()  {
@@ -29,14 +53,7 @@ hold_function <- function()  {
   
   static_ls <- dir_ls("static", recurse = TRUE)
   
-  remove_from_path <- function(file_list, remove_this) {
-    file_list %>% 
-      map(str_split, pattern = "/") %>% 
-      flatten() %>% 
-      map(~.x[.x != remove_this]) %>% 
-      map_chr(~ paste(.x, collapse = "/")) %>% 
-      as_fs_path()
-  }
+
   
   all_ls <-  as_fs_path(c(rmd_list, static_ls))
   
@@ -61,20 +78,7 @@ hold_function <- function()  {
     map(~file_copy(all_files[[.x]], clean_ls[[.x]]))
   
   file_move("docs/_index.md", "docs/index.md")
-  
-  bl_folders <- c("content", "public", "static", "layouts", "themes", "resources")
-  
-  map(
-    bl_folders, 
-    ~ file_move(.x, paste0(".", .x))
-  )
-  
-  quarto::quarto_serve()
-  
-  map(
-    bl_folders, 
-    ~ file_move(paste0(".", .x), .x)
-  )  
+
 }
 
 
