@@ -41,7 +41,23 @@ list_all_files <- function(site_name = "db.rstudio.com",
   as_fs_path(all_files)
 }
 
-
+#' @export
+prepare_files <- function(file_list = list_all_files()) {
+    map(
+      file_list,
+      ~{
+      fp <- str_locate(.x, "/static/")[[2]]
+      if(is.na(fp)) fp <- str_locate(.x, "/content/")[[2]]
+      dest1 <- as_fs_path(str_sub(.x, fp + 1, nchar(.x))) 
+      dest2 <- path("site", dest1)
+      dest <- str_replace(dest2, "/_", "/")
+      list(
+        origin = .x, 
+        destination = as_fs_path(dest),
+        sub_folder = as_fs_path(path_dir(dest1))
+      )
+    })
+}
 
 
 hold_function <- function()  {
@@ -81,17 +97,13 @@ hold_function <- function()  {
   file_move("docs/_index.md", "docs/index.md")
 
   
-  list_all_files() %>% 
-    head(10) %>% 
-    map(~{
-      fp <- str_locate(.x, "/static/")[[2]]
-      if(is.na(fp)) fp <- str_locate(.x, "/content/")[[2]]
-      dest <- str_sub(.x, fp + 1, nchar(.x))
-      list(
-        origin = .x,
-        destination = dest
-        )
-      })
+  clone_github_repo(github_branch = "quarto")
+  
+  uf <- unique(map_chr(prepare_files(), ~.x$sub_folder))
+  dir_create(path("site", uf)) 
+  
+  map(prepare_files(), ~ file_copy(.x$origin, .x$destination) )
+  
 }
 
 

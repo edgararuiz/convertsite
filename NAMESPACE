@@ -2,6 +2,7 @@
 
 export(clone_github_repo)
 export(list_all_files)
+export(prepare_files)
 export(remove_from_path)
 import(fs)
 import(here)
