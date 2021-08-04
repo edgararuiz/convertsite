@@ -17,6 +17,20 @@ clone_github_repo <- function(github_repo = "rstudio/db.rstudio.com",
   system(sys_command)
 }
 
+#' @export 
+full_file_move <- function(folder, new_folder, exclude_exts = NULL) {
+  fc <- dir_ls(folder, recurse = TRUE)
+  if(!dir_exists(new_folder)) dir_create(new_folder)
+  fcs <- path_split(fc)
+  rf <- map(fcs, ~.x[2:length(.x)])
+  rj <- path_join(rf)
+  dj <- as_fs_path(unique(path_dir(rj))) 
+  fd <- dj[dj != "."]
+  dir_create(path(new_folder, fd))
+  fls <- rj[is_file(fc)]
+  walk(fls, ~ file_copy(path(folder, .x), path(new_folder, .x)))
+}
+
 #' @export
 remove_from_path <- function(file_list, remove_this) {
   file_list %>% 
