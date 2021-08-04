@@ -1,8 +1,31 @@
 #' @importFrom purrr map map_chr walk
 #' @importFrom magrittr `%>%`
+#' @importFrom blogdown read_toml
 #' @import stringr
 #' @import fs
 #' @import here
+#' @importFrom yaml write_yaml
+
+#' @export
+convert_setup_file <- function(folder = here::here(),
+                               blogdown_folder = ".blogdown"
+                               ) {
+  toml_file <- path(blogdown_folder, "config.toml")
+  
+  if(file_exists(toml_file)) {
+    tf <- read_toml(toml_file)
+    
+    qy <- list()
+    qy$project$type <- "site"
+    qy$project$`output-dir` <- "_site"
+    qy$site$title <- tf$title
+    qy$site$`google-analytics` <- tf$googleAnalytics
+  
+    
+    write_yaml(qy, path(folder, "_quarto.yml"))    
+  }
+
+}
 
 #' @export
 convert_to_quarto <- function(folder = here::here(),
@@ -31,6 +54,11 @@ convert_to_quarto <- function(folder = here::here(),
   
   if(file_exists("_index.md")) file_move("_index.md", "index.md")
   if(file_exists("_index.Rmd")) file_move("_index.Rmd", "index.Rmd")
+  
+  convert_setup_file(
+    folder = folder,
+    blogdown_folder = blogdown_folder
+  )
 }
 
 #' @export 
