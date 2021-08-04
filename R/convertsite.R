@@ -4,6 +4,35 @@
 #' @import fs
 #' @import here
 
+#' @export
+convert_to_quarto <- function(folder = here::here(),
+                              blogdown_folder = ".blogdown"
+                              ) {
+  full_file_copy(
+    folder = folder,
+    new_folder = blogdown_folder,
+    exclude_exts = "Rproj"
+  )
+  
+  fd <- dir_ls(folder)
+  fld <- fd[is_dir(fd)]
+  dir_delete(fld)
+  
+  file_delete(fd[path_ext(fd) == "toml"])
+  
+  walk(
+    c("content", "static"),
+    ~ full_file_copy(
+      folder = path(blogdown_folder, .x),
+      new_folder = folder,
+      exclude_exts = "html"
+    )
+  )
+  
+  if(file_exists("_index.md")) file_move("_index.md", "index.md")
+  if(file_exists("_index.Rmd")) file_move("_index.Rmd", "index.Rmd")
+}
+
 #' @export 
 full_file_copy <- function(folder, new_folder, exclude_exts = NULL) {
   if(!dir_exists(new_folder)) dir_create(new_folder)
