@@ -22,6 +22,13 @@ convert_setup_file <- function(folder = here::here(),
     if(is.null(qy$project$type)) qy$project$type <- "site"
     if(is.null(qy$project$`output-dir`)) qy$project$`output-dir` <- "_site"
     if(is.null(qy$site$title)) qy$site$title <- tf$title
+    
+    if(is.null(qy$format$html$toc)) qy$format$html$toc <- TRUE
+    if(is.null(qy$format$html$`code-copy`)) qy$format$html$`code-copy` <- TRUE
+    
+    if(is.null(qy$format$html$theme$light)) qy$format$html$theme$light <- "cosmo"
+    if(is.null(qy$format$html$theme$dark)) qy$format$html$theme$dark <- "cosmo"
+    
     if(!is.na(tf$googleAnalytics) & is.null(qy$site$`google-analytics`)) qy$site$`google-analytics` <- tf$googleAnalytics
   
     if(!is.na(tf$menu)) {
@@ -79,7 +86,13 @@ convert_setup_file <- function(folder = here::here(),
       qy$site$sidebar$contents <- sbc
     }
     
-    write_yaml(qy, path(folder, "_quarto.yml"))    
+    quarto_file <- path(folder, "_quarto.yml")
+    
+    write_yaml(qy, quarto_file)    
+    
+    ql <- readLines(quarto_file)
+    nql <- str_replace(ql, ": yes", ": true")
+    writeLines(nql, quarto_file)
   }
 
 }
