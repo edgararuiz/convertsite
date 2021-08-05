@@ -18,11 +18,11 @@ convert_setup_file <- function(folder = here::here(),
   if(file_exists(toml_file)) {
     tf <- read_toml(toml_file)
     
-    qy <- list()
-    qy$project$type <- "site"
-    qy$project$`output-dir` <- "_site"
-    qy$site$title <- tf$title
-    if(!is.na(tf$googleAnalytics)) qy$site$`google-analytics` <- tf$googleAnalytics
+    qy <- setup_override
+    if(is.null(qy$project$type)) qy$project$type <- "site"
+    if(is.null(qy$project$`output-dir`)) qy$project$`output-dir` <- "_site"
+    if(is.null(qy$site$title)) qy$site$title <- tf$title
+    if(!is.na(tf$googleAnalytics) & is.null(qy$site$`google-analytics`)) qy$site$`google-analytics` <- tf$googleAnalytics
   
     if(!is.na(tf$menu)) {
       
@@ -38,9 +38,9 @@ convert_setup_file <- function(folder = here::here(),
       
       actual_doc <- map_chr(
         tbl_tf$main.url, ~{
+          content_folder <- path(blogdown_folder, "content")
           fls <- dir_ls(
-            path(blogdown_folder, "content", path_dir(.x)),
-            #glob = paste0("*", path_file(.x), "*"),
+            path(content_folder, path_dir(.x)),
             type = "file"
           )
           fls <- fls[path_ext(fls) != "html"]
@@ -48,7 +48,7 @@ convert_setup_file <- function(folder = here::here(),
           l_x <- tolower(path_file(.x))
           fls <- fls[str_detect(l_fls, l_x)]
           if(length(fls) > 0) {
-            substr(fls, nchar(blogdown_folder) + 2, nchar(fls))
+            substr(fls, nchar(content_folder) + 2, nchar(fls))
           } else {
             NA
           }
@@ -86,35 +86,38 @@ convert_setup_file <- function(folder = here::here(),
 
 #' @export
 convert_to_quarto <- function(folder = here::here(),
-                              blogdown_folder = ".blogdown"
+                              blogdown_folder = ".blogdown", 
+                              setup_override = list()
                               ) {
-  full_file_copy(
-    folder = folder,
-    new_folder = blogdown_folder,
-    exclude_exts = "Rproj"
-  )
-  
-  fd <- dir_ls(folder)
-  fld <- fd[is_dir(fd)]
-  dir_delete(fld)
-  
-  file_delete(fd[path_ext(fd) == "toml"])
-  
-  walk(
-    c("content", "static"),
-    ~ full_file_copy(
-      folder = path(blogdown_folder, .x),
-      new_folder = folder,
-      exclude_exts = "html"
+  if(!file_exists(blogdown_folder)) {
+    full_file_copy(
+      folder = folder,
+      new_folder = blogdown_folder,
+      exclude_exts = "Rproj"
     )
-  )
-  
-  if(file_exists("_index.md")) file_move("_index.md", "index.md")
-  if(file_exists("_index.Rmd")) file_move("_index.Rmd", "index.Rmd")
-  
+    
+    fd <- dir_ls(folder)
+    fld <- fd[is_dir(fd)]
+    dir_delete(fld)
+    
+    file_delete(fd[path_ext(fd) == "toml"])
+    
+    walk(
+      c("content", "static"),
+      ~ full_file_copy(
+        folder = path(blogdown_folder, .x),
+        new_folder = folder,
+        exclude_exts = "html"
+      )
+    )
+    
+    if(file_exists("_index.md")) file_move("_index.md", "index.md")
+    if(file_exists("_index.Rmd")) file_move("_index.Rmd", "index.Rmd")
+  }
   convert_setup_file(
     folder = folder,
-    blogdown_folder = blogdown_folder
+    blogdown_folder = blogdown_folder,
+    setup_override = setup_override
   )
 }
 
@@ -127,7 +130,7 @@ full_file_copy <- function(folder, new_folder, exclude_exts = NULL) {
     )
   fd <- folder_list(fls)
   dir_create(path(new_folder, fd))
-  walk(fls, ~ file_copy(path(folder, .x), path(new_folder, .x)))
+  walk(fls, ~ file_copy(path(folder, .x), path(new_folder, .x), overwrite = TRUE))
 }
 
 #' @export 
