@@ -1,10 +1,12 @@
-#' @importFrom purrr map map_chr walk
+#' @importFrom purrr map map_chr walk map_dfr transpose
 #' @importFrom magrittr `%>%`
 #' @importFrom blogdown read_toml
 #' @import stringr
 #' @import fs
 #' @import here
 #' @importFrom yaml write_yaml
+
+
 
 #' @export
 convert_setup_file <- function(folder = here::here(),
@@ -21,6 +23,59 @@ convert_setup_file <- function(folder = here::here(),
     qy$site$title <- tf$title
     qy$site$`google-analytics` <- tf$googleAnalytics
   
+    if(!is.na(tf$menu)) {
+      
+      tbl_tf <- tf$menu %>%
+        transpose() %>%
+        map_dfr(as.data.frame)
+      
+      mp <- is.na(tbl_tf$main.parent)
+      tbl_tf$group[mp] <- tbl_tf$main.name[mp]
+      tbl_tf$group[!mp] <- tbl_tf$main.parent[!mp]
+      
+      tbl_tf$id <- str_replace_all(tolower(tbl_tf$main.name), " ", "-")
+      
+      actual_doc <- map_chr(
+        tbl_tf$main.url, ~{
+          fls <- dir_ls(
+            path(folder, path_dir(.x)),
+            glob = paste0("*", path_file(.x), "*"),
+            type = "file"
+          )
+          if(length(fls) > 0) {
+            substr(fls, nchar(folder) + 2, nchar(fls))
+          } else {
+            NA
+          }
+        }
+      )
+      
+      tbl_tf$acutal <- actual_doc
+      
+      pg <- unique(tbl_tf$group)
+      
+      sbc <- pg %>%
+        map(~ {
+          tbl_group <- tbl_tf[tbl_tf$group == .x, ]
+          sh <- tbl_group[is.na(tbl_group$main.parent),]
+          
+          its <- tbl_group[!is.na(tbl_group$main.parent),]
+          
+          lits <- map(transpose(its), ~{
+            nit <- list()
+            nit$text <- .x$main.name
+            nit$href <- .x$acutal
+            nit
+          })
+          
+          sid <- list(
+            section = sh$main.name,
+            contents = lits
+          )
+        })
+      
+      qy$site$sidebar$contents <- sbc
+    }
     
     write_yaml(qy, path(folder, "_quarto.yml"))    
   }
