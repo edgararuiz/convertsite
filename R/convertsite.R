@@ -29,6 +29,11 @@ convert_setup_file <- function(folder = here::here(),
     if(is.null(qy$format$html$theme$light)) qy$format$html$theme$light <- "cosmo"
     if(is.null(qy$format$html$theme$dark)) qy$format$html$theme$dark <- "cosmo"
     
+    if(is.null(qy$site$navbar$search)) qy$site$navbar$search <- TRUE
+    if(is.null(qy$site$navbar$background)) qy$site$navbar$background <- "light"
+    if(is.null(qy$site$navbar$type)) qy$site$navbar$type <- "light"
+    
+    
     if(!is.na(tf$googleAnalytics) & is.null(qy$site$`google-analytics`)) qy$site$`google-analytics` <- tf$googleAnalytics
   
     if(!is.na(tf$menu)) {
@@ -43,22 +48,29 @@ convert_setup_file <- function(folder = here::here(),
       
       tbl_tf$id <- str_replace_all(tolower(tbl_tf$main.name), " ", "-")
       
+      content_folder <- path(blogdown_folder, "content")
+      
       actual_doc <- map_chr(
         tbl_tf$main.url, ~{
-          content_folder <- path(blogdown_folder, "content")
-          fls <- dir_ls(
-            path(content_folder, path_dir(.x)),
-            type = "file"
-          )
-          fls <- fls[path_ext(fls) != "html"]
-          l_fls <- tolower(path_file(fls))
-          l_x <- tolower(path_file(.x))
-          fls <- fls[str_detect(l_fls, l_x)]
-          if(length(fls) > 0) {
-            substr(fls, nchar(content_folder) + 2, nchar(fls))
+          if(!is.na(.x)) {
+            fls <- dir_ls(
+              path(content_folder, path_dir(.x)),
+              type = "file"
+            )
+            fls <- fls[path_ext(fls) != "html"]
+            l_fls <- tolower(path_file(fls))
+            l_x <- tolower(path_file(.x))
+            fls <- fls[str_detect(l_fls, l_x)]
+            if(length(fls) > 0) {
+              fls <- fls[[1]]
+              substr(fls, nchar(content_folder) + 2, nchar(fls))
+            } else {
+              NA
+            }
           } else {
             NA
           }
+
         }
       )
       
