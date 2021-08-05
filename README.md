@@ -16,6 +16,8 @@ devtools::install_github("edgararuiz/convertsite")
 In the root folder of the `blogdown` site run the following command:
 
 ```r
+library(convertsite)
 convert_to_quarto()
+quarto::quarto_serve()
 ```
 

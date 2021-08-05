@@ -10,7 +10,8 @@
 
 #' @export
 convert_setup_file <- function(folder = here::here(),
-                               blogdown_folder = ".blogdown"
+                               blogdown_folder = ".blogdown",
+                               setup_override = list()
                                ) {
   toml_file <- path(blogdown_folder, "config.toml")
   
@@ -21,7 +22,7 @@ convert_setup_file <- function(folder = here::here(),
     qy$project$type <- "site"
     qy$project$`output-dir` <- "_site"
     qy$site$title <- tf$title
-    qy$site$`google-analytics` <- tf$googleAnalytics
+    if(!is.na(tf$googleAnalytics)) qy$site$`google-analytics` <- tf$googleAnalytics
   
     if(!is.na(tf$menu)) {
       
@@ -38,12 +39,16 @@ convert_setup_file <- function(folder = here::here(),
       actual_doc <- map_chr(
         tbl_tf$main.url, ~{
           fls <- dir_ls(
-            path(folder, path_dir(.x)),
-            glob = paste0("*", path_file(.x), "*"),
+            path(blogdown_folder, "content", path_dir(.x)),
+            #glob = paste0("*", path_file(.x), "*"),
             type = "file"
           )
+          fls <- fls[path_ext(fls) != "html"]
+          l_fls <- tolower(path_file(fls))
+          l_x <- tolower(path_file(.x))
+          fls <- fls[str_detect(l_fls, l_x)]
           if(length(fls) > 0) {
-            substr(fls, nchar(folder) + 2, nchar(fls))
+            substr(fls, nchar(blogdown_folder) + 2, nchar(fls))
           } else {
             NA
           }
@@ -58,16 +63,13 @@ convert_setup_file <- function(folder = here::here(),
         map(~ {
           tbl_group <- tbl_tf[tbl_tf$group == .x, ]
           sh <- tbl_group[is.na(tbl_group$main.parent),]
-          
           its <- tbl_group[!is.na(tbl_group$main.parent),]
-          
           lits <- map(transpose(its), ~{
             nit <- list()
             nit$text <- .x$main.name
             nit$href <- .x$acutal
             nit
           })
-          
           sid <- list(
             section = sh$main.name,
             contents = lits

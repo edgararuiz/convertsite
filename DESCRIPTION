@@ -1,13 +1,13 @@
 Package: convertsite
 Title: Script to convert blogdown to quarto 
-Version: 0.0.0.9001
+Version: 0.0.0.9002
 Authors@R: 
-    person(given = "First",
-           family = "Last",
+    person(given = "Edgar",
+           family = "Ruiz",
            role = c("aut", "cre"),
-           email = "first.last@example.com",
-           comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: What the package does (one paragraph).
+           email = "edgararuiz@gmail.com"
+           )
+Description: Converts blogdown site to quarto
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
