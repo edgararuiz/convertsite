@@ -32,9 +32,9 @@ convert_setup_file <- function(folder = here::here(),
     if(is.null(qy$site$navbar$type)) qy$site$navbar$type <- "light"
     
     
-    if(!is.na(tf$googleAnalytics) & is.null(qy$site$`google-analytics`)) qy$site$`google-analytics` <- tf$googleAnalytics
+    if(!is.null(tf$googleAnalytics) & is.null(qy$site$`google-analytics`)) qy$site$`google-analytics` <- tf$googleAnalytics
   
-    if(!is.na(tf$menu)) {
+    if(!is.null(tf$menu)) {
       
       tbl_tf <- tf$menu %>%
         transpose() %>%
