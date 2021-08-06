@@ -1,12 +1,10 @@
+#' @importFrom stringr str_detect str_replace str_replace_all
 #' @importFrom purrr map map_chr walk map_dfr transpose
-#' @importFrom magrittr `%>%`
 #' @importFrom blogdown read_toml
-#' @import stringr
-#' @import fs
-#' @import here
 #' @importFrom yaml write_yaml
-
-
+#' @importFrom magrittr `%>%`
+#' @import here
+#' @import fs
 
 #' @export
 convert_setup_file <- function(folder = here::here(),
@@ -27,7 +25,7 @@ convert_setup_file <- function(folder = here::here(),
     if(is.null(qy$format$html$`code-copy`)) qy$format$html$`code-copy` <- TRUE
     
     if(is.null(qy$format$html$theme$light)) qy$format$html$theme$light <- "cosmo"
-    if(is.null(qy$format$html$theme$dark)) qy$format$html$theme$dark <- "cosmo"
+    if(is.null(qy$format$html$theme$dark)) qy$format$html$theme$dark <- "dakly"
     
     if(is.null(qy$site$navbar$search)) qy$site$navbar$search <- TRUE
     if(is.null(qy$site$navbar$background)) qy$site$navbar$background <- "light"
@@ -158,13 +156,11 @@ full_file_copy <- function(folder, new_folder, exclude_exts = NULL) {
   walk(fls, ~ file_copy(path(folder, .x), path(new_folder, .x), overwrite = TRUE))
 }
 
-#' @export 
 folder_list <- function(file_list) {
   dj <- as_fs_path(unique(path_dir(file_list))) 
   dj[dj != "."]
 }
 
-#' @export
 full_file_list <- function(folder, exclude_exts = NULL) {
   fc <- dir_ls(folder, recurse = TRUE)
   if(!is.null(exclude_exts)) {
@@ -175,7 +171,6 @@ full_file_list <- function(folder, exclude_exts = NULL) {
   fc
 }
 
-#' @export
 sanitized_file_list <- function(folder, exclude_exts = NULL) {
   fc <- full_file_list(
     folder = folder,
