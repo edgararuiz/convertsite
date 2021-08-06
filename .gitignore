@@ -30,3 +30,4 @@ vignettes/*.pdf
 .blogdown
 .DS_Store
 _quarto.yml
+.source

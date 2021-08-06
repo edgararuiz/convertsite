@@ -125,6 +125,17 @@ blogdown_to_quarto <- function(folder = here::here(),
     archive_folder = blogdown_folder,
     sub_folders = c("content", "static")
   )
+  
+  alf <- dir_ls(folder, recurse = TRUE)
+  af <- alf[is_file(alf)]
+  ixf <- substr(path_file(af), 1, 6) == "_index" 
+  has_index <- af[ixf]
+  new_name <- path(
+    path_dir(has_index), 
+    substr(path_file(has_index), 2, nchar(path_file(has_index)))
+    )
+  file_move(has_index, new_name)
+  
   convert_setup_file(
     folder = folder,
     blogdown_folder = blogdown_folder,
@@ -144,21 +155,20 @@ convert_to_quarto <- function(folder = here::here(),
     )
   }
 
-  cfs <- dir_ls(folder)
-  file_delete(cfs)
-
+  if(dir_exists(folder)) {
+    cfs <- dir_ls(folder)
+    file_delete(cfs)    
+  }
 
   walk(
     sub_folders,
     ~ full_file_copy(
-      folder = path(archive_folder, .x),
-      new_folder = folder,
-      exclude_exts = "html"
+        folder = path(archive_folder, .x),
+        new_folder = folder,
+        exclude_exts = "html"
     )
   )
 
-  if (file_exists("_index.md")) file_move("_index.md", "index.md")
-  if (file_exists("_index.Rmd")) file_move("_index.Rmd", "index.Rmd")
 }
 
 #' @export
