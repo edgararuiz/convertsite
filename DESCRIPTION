@@ -1,6 +1,6 @@
 Package: convertsite
 Title: Script to convert blogdown to quarto 
-Version: 0.0.0.9003
+Version: 0.0.0.9004
 Authors@R: 
     person(given = "Edgar",
            family = "Ruiz",
