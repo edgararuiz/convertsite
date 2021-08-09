@@ -1,15 +1,18 @@
 #' @importFrom stringr str_detect str_replace str_replace_all
-#' @importFrom purrr map map_chr walk map_dfr transpose
+#' @importFrom purrr map map_chr walk map_dfr transpose keep
 #' @importFrom blogdown read_toml
-#' @importFrom yaml write_yaml
+#' @importFrom yaml write_yaml read_yaml
 #' @importFrom magrittr `%>%`
+#' @importFrom jsonlite read_json
 #' @import here
 #' @import fs
 
 #' @export
-convert_setup_file <- function(folder = here::here(),
-                               blogdown_folder = ".blogdown",
-                               setup_override = list()) {
+blogdown_setup_file <- function(folder = here::here(),
+                                blogdown_folder = ".blogdown",
+                                setup_override = list()
+                                ) {
+  
   toml_file <- path(blogdown_folder, "config.toml")
 
   if (file_exists(toml_file)) {
@@ -103,15 +106,54 @@ convert_setup_file <- function(folder = here::here(),
   }
 }
 
+#' @export
+makefile_setup_file <- function(folder = here::here(),
+                                makefile_folder = ".makefile",
+                                setup_override = list()
+                                ) {
+    qy <- setup_override
+    if (is.null(qy$project$type)) qy$project$type <- "site"
+    output_dir <- ifelse(is.null(qy$project$`output-dir`), "_site", qy$project$`output-dir`) 
+    qy$project$`output-dir` <- output_dir
+    if (is.null(qy$site$title)) qy$site$title <- "Default"
+    
+    if (is.null(qy$format$html$toc)) qy$format$html$toc <- TRUE
+    if (is.null(qy$format$html$`code-copy`)) qy$format$html$`code-copy` <- TRUE
+    
+    if (is.null(qy$format$html$theme$light)) qy$format$html$theme$light <- "cosmo"
+    if (is.null(qy$format$html$theme$dark)) qy$format$html$theme$dark <- "dakly"
+    
+    if (is.null(qy$site$navbar$search)) qy$site$navbar$search <- TRUE
+    if (is.null(qy$site$navbar$background)) qy$site$navbar$background <- "light"
+    if (is.null(qy$site$navbar$type)) qy$site$navbar$type <- "light"
+    
+    qy$site$sidebar$contents <- folder_side_navigation(folder = output_dir)
+    
+    quarto_file <- path(folder, "_quarto.yml")
+    
+    write_yaml(qy, quarto_file)
+    
+    ql <- readLines(quarto_file)
+    nql <- str_replace(ql, ": yes", ": true")
+    writeLines(nql, quarto_file)
+  
+}
+
 
 #' @export
 makefile_to_quarto <- function(folder = here::here(),
-                               blogdown_folder = ".makefile",
+                               makefile_folder = ".makefile",
                                setup_override = list()) {
   convert_to_quarto(
     folder = folder,
-    archive_folder = blogdown_folder,
+    archive_folder = makefile_folder,
     sub_folders = "docs"
+  )
+  
+  makefile_setup_file(
+    folder = folder,
+    makefile_folder = makefile_folder,
+    setup_override = setup_override
   )
 }
 
@@ -136,7 +178,8 @@ blogdown_to_quarto <- function(folder = here::here(),
     )
   file_move(has_index, new_name)
   
-  convert_setup_file(
+  
+  blogdown_setup_file(
     folder = folder,
     blogdown_folder = blogdown_folder,
     setup_override = setup_override
@@ -168,7 +211,10 @@ convert_to_quarto <- function(folder = here::here(),
         exclude_exts = "html"
     )
   )
-
+  
+  pf <- dir_ls(archive_folder, glob = "*.Rproj")
+  file_move(pf, path(folder, path_file(pf)))
+  
 }
 
 #' @export
@@ -187,6 +233,66 @@ folder_list <- function(file_list) {
   dj <- as_fs_path(unique(path_dir(file_list)))
   dj[dj != "."]
 }
+
+#' @export
+folder_side_navigation <- function(folder = "_site") {
+  folder <- "_site"
+  index_folder <- ".quarto/index"
+  json_files <- dir_ls(index_folder, recurse = TRUE, type = "file", glob = "*.json")
+  
+  file_list1 <- map(
+    json_files,
+    ~{
+      rj <- read_json(.x)
+      file_name <- path_ext_remove(path_ext_remove(path_file(.x)))
+      file_ext <- path_ext(path_ext_remove(path_file(.x)))
+      fn1 <- path(substr(.x, nchar(index_folder) + 2, nchar(.x)))
+      fn2 <- path_dir(fn1)
+      fp <- path(fn2, file_name, ext = file_ext)
+      ps <- path_split(fp)[[1]]
+      list(
+        text = rj$title,
+        href = fp,
+        level1 = ifelse(ps[[1]] == ".", "", ps[[1]]),
+        level2 = ifelse(length(ps) > 2, ps[[2]], "")
+      )
+    }
+  ) 
+  
+  file_list <- unname(file_list1)
+  
+  prepare_level <- function(file_list, l1, l2) {
+    cl <- keep(file_list, ~.x$level1 == l1)
+    il <- keep(cl, ~ str_detect(.x$href, "index.") && .x$level2 == l2)
+    rl <- keep(cl, ~ !str_detect(.x$href, "index.") && .x$level2 == l2)
+    newl <- list()
+    if(length(il) == 1) {
+      newl$section <- il[[1]]$text
+      newl$href <- il[[1]]$href
+    } else {
+      newl$section <- l2
+    }
+    al <- map(rl, ~.x[c("text", "href")])
+    if(length(al) > 0) newl$contents <- al
+    newl
+  }
+  
+  level1 <- sort(unique(map_chr(file_list, ~.x$level1)))
+  
+  map(
+    level1, 
+    ~{
+      lv1 <- .x
+      cl <- keep(file_list, ~.x$level1 == lv1)
+      level2 <- sort(unique(map_chr(cl, ~.x$level2)))
+      level2 <- level2[level2 != ""]
+      hd <- prepare_level(cl, lv1, "")
+      cnt <- map(level2, ~ prepare_level(cl, lv1, .x))
+      if(length(cnt) > 0) hd$contents <- cnt
+      hd
+    })
+}
+
 
 full_file_list <- function(folder, exclude_exts = NULL) {
   fc <- dir_ls(folder, recurse = TRUE)
@@ -209,3 +315,5 @@ sanitized_file_list <- function(folder, exclude_exts = NULL) {
   rj <- path_join(rf)
   rj[is_file(fc)]
 }
+
+
