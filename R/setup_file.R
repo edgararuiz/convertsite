@@ -1,4 +1,63 @@
+#' @export
+blogdown_setup_file <- function(folder = here::here(),
+                                blogdown_folder = ".blogdown",
+                                setup_override = list()
+) {
+  
+  
+  toml_file <- path(blogdown_folder, "config.toml")
+  tf <- list()
+  if (file_exists(toml_file)) tf <- read_toml(toml_file)  
+  sbc <- toml_side_navigation(tf)
+  if(is.null(sbc)) sbc <- folder_side_navigation()
+  qy <- setup_file(
+    setup_override = setup_override,
+    title = tf$title
+  )
+  if (!is.null(tf$googleAnalytics) & is.null(qy$site$`google-analytics`)) qy$site$`google-analytics` <- tf$googleAnalytics
+  save_quarto_yaml(qy, path(folder, "_quarto.yml"))
+}
+
+#' @export
+makefile_setup_file <- function(folder = here::here(),
+                                makefile_folder = ".makefile",
+                                setup_override = list()
+) {
+  raw_mkdocs <- readLines(path(makefile_folder, "mkdocs.yml"))
+  
+  filter_docs <- raw_mkdocs[raw_mkdocs != ""]
+  
+  split_docs <- strsplit(filter_docs, ":")
+  
+  line_name <- keep(split_docs, ~.x[1] == "site_name1")
+  
+  if(length(line_name > 1)) {
+    line_name <- line_name[[1]]
+    site_name <- paste0(line_name[2:length(line_name)], collapse = "")  
+  } else {
+    site_name <- "Default"
+  }
+  
+  qy <- setup_file(
+    setup_override = setup_override,
+    title = site_name
+  )
+  
+  qy$site$sidebar$contents <- folder_side_navigation(folder = qy$project$`output-dir`)
+  
+  save_quarto_yaml(qy, path(folder, "_quarto.yml"))
+}
+
+save_quarto_yaml <- function(setup, location) {
+  quarto_file <- location
+  write_yaml(setup, quarto_file)
+  ql <- readLines(quarto_file)
+  nql <- str_replace(ql, ": yes", ": true")
+  writeLines(nql, quarto_file)
+}
+
 setup_file <- function(setup_override = list(), title = NULL) {
+  if(is.null(title)) title <- "Default"
   qy <- setup_override
   if (is.null(qy$project$type)) qy$project$type <- "site"
   if (is.null(qy$project$`output-dir`)) qy$project$`output-dir` <- "_site"
@@ -18,130 +77,64 @@ setup_file <- function(setup_override = list(), title = NULL) {
 }
 
 #' @export
-blogdown_setup_file <- function(folder = here::here(),
-                                blogdown_folder = ".blogdown",
-                                setup_override = list()
-) {
-  
-  toml_file <- path(blogdown_folder, "config.toml")
-  
-  if (file_exists(toml_file)) {
-    tf <- read_toml(toml_file)
+toml_side_navigation <- function(toml_list) {
+  if (!is.null(toml_list$menu)) {
+    tbl_tf <- toml_list$menu %>%
+      transpose() %>%
+      map_dfr(as.data.frame)
     
-    qu <- setup_file(
-      setup_override = setup_override,
-      title = tf$title
-    )
+    mp <- is.na(tbl_tf$main.parent)
+    tbl_tf$group[mp] <- tbl_tf$main.name[mp]
+    tbl_tf$group[!mp] <- tbl_tf$main.parent[!mp]
     
+    tbl_tf$id <- str_replace_all(tolower(tbl_tf$main.name), " ", "-")
     
-    if (!is.null(tf$googleAnalytics) & is.null(qy$site$`google-analytics`)) qy$site$`google-analytics` <- tf$googleAnalytics
+    content_folder <- path(blogdown_folder, "content")
     
-    if (!is.null(tf$menu)) {
-      tbl_tf <- tf$menu %>%
-        transpose() %>%
-        map_dfr(as.data.frame)
-      
-      mp <- is.na(tbl_tf$main.parent)
-      tbl_tf$group[mp] <- tbl_tf$main.name[mp]
-      tbl_tf$group[!mp] <- tbl_tf$main.parent[!mp]
-      
-      tbl_tf$id <- str_replace_all(tolower(tbl_tf$main.name), " ", "-")
-      
-      content_folder <- path(blogdown_folder, "content")
-      
-      actual_doc <- map_chr(
-        tbl_tf$main.url, ~ {
-          if (!is.na(.x)) {
-            fls <- dir_ls(
-              path(content_folder, path_dir(.x)),
-              type = "file"
-            )
-            fls <- fls[path_ext(fls) != "html"]
-            l_fls <- tolower(path_file(fls))
-            l_x <- tolower(path_file(.x))
-            fls <- fls[str_detect(l_fls, l_x)]
-            if (length(fls) > 0) {
-              fls <- fls[[1]]
-              substr(fls, nchar(content_folder) + 2, nchar(fls))
-            } else {
-              NA
-            }
+    actual_doc <- map_chr(
+      tbl_tf$main.url, ~ {
+        if (!is.na(.x)) {
+          fls <- dir_ls(
+            path(content_folder, path_dir(.x)),
+            type = "file"
+          )
+          fls <- fls[path_ext(fls) != "html"]
+          l_fls <- tolower(path_file(fls))
+          l_x <- tolower(path_file(.x))
+          fls <- fls[str_detect(l_fls, l_x)]
+          if (length(fls) > 0) {
+            fls <- fls[[1]]
+            substr(fls, nchar(content_folder) + 2, nchar(fls))
           } else {
             NA
           }
+        } else {
+          NA
         }
-      )
-      
-      tbl_tf$acutal <- actual_doc
-      
-      pg <- unique(tbl_tf$group)
-      
-      sbc <- pg %>%
-        map(~ {
-          tbl_group <- tbl_tf[tbl_tf$group == .x, ]
-          sh <- tbl_group[is.na(tbl_group$main.parent), ]
-          its <- tbl_group[!is.na(tbl_group$main.parent), ]
-          lits <- map(transpose(its), ~ {
-            nit <- list()
-            nit$text <- .x$main.name
-            nit$href <- .x$acutal
-            nit
-          })
-          sid <- list(
-            section = sh$main.name,
-            contents = lits
-          )
+      }
+    )
+    tbl_tf$acutal <- actual_doc
+    pg <- unique(tbl_tf$group)
+    sbc <- pg %>%
+      map(~ {
+        tbl_group <- tbl_tf[tbl_tf$group == .x, ]
+        sh <- tbl_group[is.na(tbl_group$main.parent), ]
+        its <- tbl_group[!is.na(tbl_group$main.parent), ]
+        lits <- map(transpose(its), ~ {
+          nit <- list()
+          nit$text <- .x$main.name
+          nit$href <- .x$acutal
+          nit
         })
-      
-      qy$site$sidebar$contents <- sbc
-    }
-    
-    quarto_file <- path(folder, "_quarto.yml")
-    
-    write_yaml(qy, quarto_file)
-    
-    ql <- readLines(quarto_file)
-    nql <- str_replace(ql, ": yes", ": true")
-    writeLines(nql, quarto_file)
+        sid <- list(
+          section = sh$main.name,
+          contents = lits
+        )
+      })
+  } else {
+    NULL
   }
 }
-
-#' @export
-makefile_setup_file <- function(folder = here::here(),
-                                makefile_folder = ".makefile",
-                                setup_override = list()
-) {
-  qy <- setup_override
-  if (is.null(qy$project$type)) qy$project$type <- "site"
-  output_dir <- ifelse(is.null(qy$project$`output-dir`), "_site", qy$project$`output-dir`) 
-  qy$project$`output-dir` <- output_dir
-  if (is.null(qy$site$title)) qy$site$title <- "Default"
-  
-  if (is.null(qy$format$html$toc)) qy$format$html$toc <- TRUE
-  if (is.null(qy$format$html$`code-copy`)) qy$format$html$`code-copy` <- TRUE
-  
-  if (is.null(qy$format$html$theme$light)) qy$format$html$theme$light <- c("cosmo", "theme/theme.scss")
-  if (is.null(qy$format$html$theme$dark)) qy$format$html$theme$dark <- c("cosmo", "theme/theme-dark.scss")
-  
-  if (is.null(qy$format$html$css)) qy$format$html$css <- "theme/styles.css"
-  
-  if (is.null(qy$site$navbar$search)) qy$site$navbar$search <- TRUE
-  if (is.null(qy$site$navbar$background)) qy$site$navbar$background <- "light"
-  if (is.null(qy$site$navbar$type)) qy$site$navbar$type <- "light"
-  
-  qy$site$sidebar$contents <- folder_side_navigation(folder = output_dir)
-  
-  quarto_file <- path(folder, "_quarto.yml")
-  
-  write_yaml(qy, quarto_file)
-  
-  ql <- readLines(quarto_file)
-  nql <- str_replace(ql, ": yes", ": true")
-  writeLines(nql, quarto_file)
-  
-}
-
-
 
 #' @export
 folder_side_navigation <- function(folder = "_site") {
@@ -167,27 +160,8 @@ folder_side_navigation <- function(folder = "_site") {
       )
     }
   ) 
-  
   file_list <- unname(file_list1)
-  
-  prepare_level <- function(file_list, l1, l2) {
-    cl <- keep(file_list, ~.x$level1 == l1)
-    il <- keep(cl, ~ str_detect(.x$href, "index.") && .x$level2 == l2)
-    rl <- keep(cl, ~ !str_detect(.x$href, "index.") && .x$level2 == l2)
-    newl <- list()
-    if(length(il) == 1) {
-      newl$section <- il[[1]]$text
-      newl$href <- il[[1]]$href
-    } else {
-      newl$section <- l2
-    }
-    al <- map(rl, ~.x[c("text", "href")])
-    if(length(al) > 0) newl$contents <- al
-    newl
-  }
-  
   level1 <- sort(unique(map_chr(file_list, ~.x$level1)))
-  
   map(
     level1, 
     ~{
@@ -200,5 +174,21 @@ folder_side_navigation <- function(folder = "_site") {
       if(length(cnt) > 0) hd$contents <- cnt
       hd
     })
+}
+
+prepare_level <- function(file_list, l1, l2) {
+  cl <- keep(file_list, ~.x$level1 == l1)
+  il <- keep(cl, ~ str_detect(.x$href, "index.") && .x$level2 == l2)
+  rl <- keep(cl, ~ !str_detect(.x$href, "index.") && .x$level2 == l2)
+  newl <- list()
+  if(length(il) == 1) {
+    newl$section <- il[[1]]$text
+    newl$href <- il[[1]]$href
+  } else {
+    newl$section <- l2
+  }
+  al <- map(rl, ~.x[c("text", "href")])
+  if(length(al) > 0) newl$contents <- al
+  newl
 }
 
