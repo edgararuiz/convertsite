@@ -3,12 +3,12 @@ blogdown_setup_file <- function(folder = here::here(),
                                 blogdown_folder = ".blogdown",
                                 setup_override = list()
 ) {
-  
-  
+
+
   toml_file <- path(blogdown_folder, "config.toml")
   tf <- list()
-  if (file_exists(toml_file)) tf <- read_toml(toml_file)  
-  sbc <- toml_side_navigation(tf)
+  if (file_exists(toml_file)) tf <- read_toml(toml_file)
+  sbc <- toml_side_navigation(tf, blogdown_folder = blogdown_folder)
   if(is.null(sbc)) sbc <- folder_side_navigation()
   qy <- setup_file(
     setup_override = setup_override,
@@ -24,27 +24,27 @@ makefile_setup_file <- function(folder = here::here(),
                                 setup_override = list()
 ) {
   raw_mkdocs <- readLines(path(makefile_folder, "mkdocs.yml"))
-  
+
   filter_docs <- raw_mkdocs[raw_mkdocs != ""]
-  
+
   split_docs <- strsplit(filter_docs, ":")
-  
+
   line_name <- keep(split_docs, ~.x[1] == "site_name1")
-  
+
   if(length(line_name > 1)) {
     line_name <- line_name[[1]]
-    site_name <- paste0(line_name[2:length(line_name)], collapse = "")  
+    site_name <- paste0(line_name[2:length(line_name)], collapse = "")
   } else {
     site_name <- "Default"
   }
-  
+
   qy <- setup_file(
     setup_override = setup_override,
     title = site_name
   )
-  
+
   qy$site$sidebar$contents <- folder_side_navigation(folder = qy$project$`output-dir`)
-  
+
   save_quarto_yaml(qy, path(folder, "_quarto.yml"))
 }
 
@@ -62,35 +62,35 @@ setup_file <- function(setup_override = list(), title = NULL) {
   if (is.null(qy$project$type)) qy$project$type <- "site"
   if (is.null(qy$project$`output-dir`)) qy$project$`output-dir` <- "_site"
   if (is.null(qy$site$title)) qy$site$title <- title
-  
+
   if (is.null(qy$format$html$toc)) qy$format$html$toc <- TRUE
   if (is.null(qy$format$html$`code-copy`)) qy$format$html$`code-copy` <- TRUE
-  
+
   if (is.null(qy$format$html$theme$light)) qy$format$html$theme$light <- "cosmo"
   if (is.null(qy$format$html$theme$dark)) qy$format$html$theme$dark <- "dakly"
-  
+
   if (is.null(qy$site$navbar$search)) qy$site$navbar$search <- TRUE
   if (is.null(qy$site$navbar$background)) qy$site$navbar$background <- "light"
   if (is.null(qy$site$navbar$type)) qy$site$navbar$type <- "light"
-  
+
   qy
 }
 
 #' @export
-toml_side_navigation <- function(toml_list) {
+toml_side_navigation <- function(toml_list, blogdown_folder = ".blogdown") {
   if (!is.null(toml_list$menu)) {
     tbl_tf <- toml_list$menu %>%
       transpose() %>%
       map_dfr(as.data.frame)
-    
+
     mp <- is.na(tbl_tf$main.parent)
     tbl_tf$group[mp] <- tbl_tf$main.name[mp]
     tbl_tf$group[!mp] <- tbl_tf$main.parent[!mp]
-    
+
     tbl_tf$id <- str_replace_all(tolower(tbl_tf$main.name), " ", "-")
-    
+
     content_folder <- path(blogdown_folder, "content")
-    
+
     actual_doc <- map_chr(
       tbl_tf$main.url, ~ {
         if (!is.na(.x)) {
@@ -141,7 +141,7 @@ folder_side_navigation <- function(folder = "_site") {
   folder <- "_site"
   index_folder <- ".quarto/index"
   json_files <- dir_ls(index_folder, recurse = TRUE, type = "file", glob = "*.json")
-  
+
   file_list1 <- map(
     json_files,
     ~{
@@ -159,11 +159,11 @@ folder_side_navigation <- function(folder = "_site") {
         level2 = ifelse(length(ps) > 2, ps[[2]], "")
       )
     }
-  ) 
+  )
   file_list <- unname(file_list1)
   level1 <- sort(unique(map_chr(file_list, ~.x$level1)))
   map(
-    level1, 
+    level1,
     ~{
       lv1 <- .x
       cl <- keep(file_list, ~.x$level1 == lv1)

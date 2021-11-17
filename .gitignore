@@ -32,3 +32,4 @@ vignettes/*.pdf
 _quarto.yml
 .source
 .makefile
+.Rproj.user
