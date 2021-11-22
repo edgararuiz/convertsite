@@ -15,10 +15,17 @@ makefile_to_quarto <- function(folder = ".",
   )
 }
 
+#' @export
+new_quarto_folder <- function(home_folder = path_dir(here::here()),
+                              project_name = path_file(here::here()),
+                              new_name = paste0(project_name, "_quarto")
+                              ) {
+  path(home_folder, new_name)
+}
 
 #' @export
 blogdown_to_quarto <- function(project_folder = here::here(),
-                               quarto_folder = here::here(".quarto"),
+                               quarto_folder = new_quarto_folder(),
                                setup_override = list()
                                ) {
   convert_to_quarto(

@@ -4,7 +4,7 @@
 #' @importFrom yaml write_yaml read_yaml
 #' @importFrom magrittr `%>%`
 #' @importFrom jsonlite read_json
-#' @importFrom usethis use_rstudio
+#' @importFrom rstudioapi openProject
 #' @import here
 #' @import fs
 NULL
