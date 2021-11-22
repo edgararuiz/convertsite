@@ -17,67 +17,60 @@ makefile_to_quarto <- function(folder = ".",
 
 
 #' @export
-blogdown_to_quarto <- function(folder = ".",
-                               blogdown_folder = ".blogdown",
-                               setup_override = list()) {
+blogdown_to_quarto <- function(project_folder = here::here(),
+                               quarto_folder = here::here(".quarto"),
+                               setup_override = list()
+                               ) {
   convert_to_quarto(
-    folder = folder,
-    archive_folder = blogdown_folder,
+    project_folder = project_folder,
+    quarto_folder = quarto_folder,
     sub_folders = c("content", "static")
   )
 
-  alf <- dir_ls(folder, recurse = TRUE)
+  alf <- dir_ls(quarto_folder, recurse = TRUE)
   af <- alf[is_file(alf)]
   ixf <- substr(path_file(af), 1, 6) == "_index"
   has_index <- af[ixf]
+
   new_name <- path(
     path_dir(has_index),
     substr(path_file(has_index), 2, nchar(path_file(has_index)))
   )
+
   file_move(has_index, new_name)
 
-
   blogdown_setup_file(
-    folder = folder,
-    blogdown_folder = blogdown_folder,
+    folder = quarto_folder,
+    blogdown_folder = project_folder,
     setup_override = setup_override
   )
 }
 
-
 #' @export
-convert_to_quarto <- function(folder = ".",
-                              archive_folder = ".blogdown",
-                              sub_folders = c("content", "static")) {
-  if (!file_exists(archive_folder)) {
-    full_file_copy(
-      folder = folder,
-      new_folder = archive_folder
-    )
-  }
+convert_to_quarto <- function(project_folder = here::here(),
+                              quarto_folder = here::here(".quarto"),
+                              sub_folders = c("content", "static")
+                              ) {
 
-  # if(dir_exists(folder)) {
-  #   cfs <- dir_ls(folder)
-  #   file_delete(cfs)
-  # }
+  if(!dir_exists(quarto_folder)) dir_create(quarto_folder)
 
   walk(
     sub_folders,
     ~ full_file_copy(
-      folder = path(archive_folder, .x),
-      new_folder = folder,
-      exclude_exts = "html"
+        folder = path(project_folder, .x),
+        new_folder = quarto_folder,
+        exclude_exts = "html"
     )
   )
 
-  pf <- dir_ls(archive_folder, glob = "*.Rproj")
-  if(length(pf) == 0) {
-    use_rstudio()
-  } else {
-    file_copy(pf, path(folder, path_file(pf)))
+  pf <- dir_ls(project_folder, glob = "*.Rproj")
+
+  if(length(pf) != 0) {
+    file_copy(pf, path(quarto_folder, path_file(pf)))
   }
+
   full_file_copy(
-    system.file("inst/theme", "convertsite"),
-    path(folder, "theme")
+    system.file("theme", package = "convertsite"),
+    path(quarto_folder, "theme")
   )
 }
