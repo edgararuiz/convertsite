@@ -44,6 +44,8 @@ blogdown_to_quarto <- function(project_folder = here::here(),
     blogdown_folder = project_folder,
     setup_override = setup_override
   )
+
+  rstudioapi::openProject(quarto_folder)
 }
 
 #' @export
