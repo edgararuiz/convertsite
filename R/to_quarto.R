@@ -1,16 +1,17 @@
 #' @export
-makefile_to_quarto <- function(folder = ".",
-                               makefile_folder = ".makefile",
-                               setup_override = list()) {
+makefile_to_quarto <- function(project_folder = here::here(),
+                               quarto_folder = new_quarto_folder(),
+                               setup_override = list()
+                               ) {
   convert_to_quarto(
-    folder = folder,
-    archive_folder = makefile_folder,
+    project_folder = project_folder,
+    quarto_folder = quarto_folder,
     sub_folders = "docs"
   )
 
   makefile_setup_file(
-    folder = folder,
-    makefile_folder = makefile_folder,
+    folder = quarto_folder,
+    makefile_folder = project_folder,
     setup_override = setup_override
   )
 }
@@ -57,7 +58,7 @@ blogdown_to_quarto <- function(project_folder = here::here(),
 
 #' @export
 convert_to_quarto <- function(project_folder = here::here(),
-                              quarto_folder = here::here(".quarto"),
+                              quarto_folder = new_quarto_folder(),
                               sub_folders = c("content", "static")
                               ) {
 
