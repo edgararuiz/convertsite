@@ -83,6 +83,6 @@ convert_to_quarto <- function(project_folder = here::here(),
 
   full_file_copy(
     system.file("theme", package = "convertsite"),
-    path(quarto_folder, "theme")
+    quarto_folder
   )
 }

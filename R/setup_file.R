@@ -70,11 +70,13 @@ setup_file <- function(setup_override = list(), title = NULL) {
   if (is.null(qy$project$`output-dir`)) qy$project$`output-dir` <- "_site"
   if (is.null(qy$site$title)) qy$site$title <- title
 
-  if (is.null(qy$site$format$html$toc)) qy$site$format$html$toc <- TRUE
-  if (is.null(qy$site$format$html$`code-copy`)) qy$site$format$html$`code-copy` <- TRUE
+  if (is.null(qy$format$html$toc)) qy$format$html$toc <- TRUE
+  if (is.null(qy$format$html$`code-copy`)) qy$format$html$`code-copy` <- TRUE
+  if (is.null(qy$format$html$`code-overflow`)) qy$format$html$`code-overflow` <- "wrap"
+  if (is.null(qy$format$html$css)) qy$format$html$css <- "styles.css"
 
-  if (is.null(qy$site$format$html$theme$light)) qy$site$format$html$theme$light <- "cosmo"
-  if (is.null(qy$site$format$html$theme$dark)) qy$site$format$html$theme$dark <- "dakly"
+  if (is.null(qy$format$html$theme$light)) qy$format$html$theme$light <- `[cosmo, theme.scss]`
+  if (is.null(qy$format$html$theme$dark)) qy$format$html$theme$dark <- `[cosmo, theme-dark.scss]`
 
   if (is.null(qy$site$navbar$search)) qy$site$navbar$search <- TRUE
   if (is.null(qy$site$navbar$background)) qy$site$navbar$background <- "light"
