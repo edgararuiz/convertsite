@@ -16,7 +16,7 @@ folder_list <- function(file_list) {
 }
 
 full_file_list <- function(folder, exclude_exts = NULL) {
-  fc <- dir_ls(folder, recurse = TRUE)
+  fc <- dir_ls(folder, recurse = TRUE, all = TRUE)
   if (!is.null(exclude_exts)) {
     for (i in 1:length(exclude_exts)) {
       fc <- fc[path_ext(fc) != exclude_exts[i]]

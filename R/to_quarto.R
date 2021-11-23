@@ -75,6 +75,11 @@ convert_to_quarto <- function(project_folder = here::here(),
     )
   )
 
+  dir_copy(
+    path(project_folder, ".git"),
+    path(quarto_folder)
+  )
+
   pf <- dir_ls(project_folder, glob = "*.Rproj")
 
   if(length(pf) != 0) {

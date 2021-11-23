@@ -75,8 +75,8 @@ setup_file <- function(setup_override = list(), title = NULL) {
   if (is.null(qy$format$html$`code-overflow`)) qy$format$html$`code-overflow` <- "wrap"
   if (is.null(qy$format$html$css)) qy$format$html$css <- "styles.css"
 
-  if (is.null(qy$format$html$theme$light)) qy$format$html$theme$light <- `[cosmo, theme.scss]`
-  if (is.null(qy$format$html$theme$dark)) qy$format$html$theme$dark <- `[cosmo, theme-dark.scss]`
+  if (is.null(qy$format$html$theme$light)) qy$format$html$theme$light <- "[cosmo, theme.scss]"
+  if (is.null(qy$format$html$theme$dark)) qy$format$html$theme$dark <- "[cosmo, theme-dark.scss]"
 
   if (is.null(qy$site$navbar$search)) qy$site$navbar$search <- TRUE
   if (is.null(qy$site$navbar$background)) qy$site$navbar$background <- "light"
@@ -85,7 +85,7 @@ setup_file <- function(setup_override = list(), title = NULL) {
   qy
 }
 
-toml_side_navigation <- function(toml_list, project_folder = ".blogdown") {
+toml_side_navigation <- function(toml_list, project_folder) {
   if (!is.null(toml_list$menu)) {
     tbl_tf <- toml_list$menu %>%
       transpose() %>%
