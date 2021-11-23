@@ -1,29 +1,36 @@
 #' @export
-blogdown_setup_file <- function(folder = here::here(),
-                                blogdown_folder = ".blogdown",
+blogdown_setup_file <- function(project_folder = here::here(),
                                 setup_override = list()
-) {
+                                ) {
 
 
-  toml_file <- path(blogdown_folder, "config.toml")
-  tf <- list()
-  if (file_exists(toml_file)) tf <- read_toml(toml_file)
-  sbc <- toml_side_navigation(tf, blogdown_folder = blogdown_folder)
-  if(is.null(sbc)) sbc <- folder_side_navigation()
+  toml_file <- path(project_folder, "config.toml")
+
+  if (file_exists(toml_file)) {
+    tf <- read_toml(toml_file)
+  } else {
+    tf <- list()
+  }
+
   qy <- setup_file(
     setup_override = setup_override,
     title = tf$title
   )
+
   if (!is.null(tf$googleAnalytics) & is.null(qy$site$`google-analytics`)) qy$site$`google-analytics` <- tf$googleAnalytics
-  save_quarto_yaml(qy, path(folder, "_quarto.yml"))
+
+  sbc <- toml_side_navigation(tf, project_folder = project_folder)
+  if(is.null(sbc)) sbc <- folder_side_navigation()
+  qy$sidebar <- sbc
+
+  qy
 }
 
 #' @export
-makefile_setup_file <- function(folder = here::here(),
-                                makefile_folder = ".makefile",
+makefile_setup_file <- function(project_folder = here::here(),
                                 setup_override = list()
-) {
-  raw_mkdocs <- readLines(path(makefile_folder, "mkdocs.yml"))
+                                ) {
+  raw_mkdocs <- readLines(path(project_folder, "mkdocs.yml"))
 
   filter_docs <- raw_mkdocs[raw_mkdocs != ""]
 
@@ -45,15 +52,15 @@ makefile_setup_file <- function(folder = here::here(),
 
   qy$site$sidebar$contents <- folder_side_navigation(folder = qy$project$`output-dir`)
 
-  save_quarto_yaml(qy, path(folder, "_quarto.yml"))
+  qy
 }
 
-save_quarto_yaml <- function(setup, location) {
-  quarto_file <- location
-  write_yaml(setup, quarto_file)
-  ql <- readLines(quarto_file)
+#' @export
+save_quarto_yaml <- function(x, location) {
+  write_yaml(x, location)
+  ql <- readLines(location)
   nql <- str_replace(ql, ": yes", ": true")
-  writeLines(nql, quarto_file)
+  writeLines(nql, location)
 }
 
 setup_file <- function(setup_override = list(), title = NULL) {
@@ -76,8 +83,7 @@ setup_file <- function(setup_override = list(), title = NULL) {
   qy
 }
 
-#' @export
-toml_side_navigation <- function(toml_list, blogdown_folder = ".blogdown") {
+toml_side_navigation <- function(toml_list, project_folder = ".blogdown") {
   if (!is.null(toml_list$menu)) {
     tbl_tf <- toml_list$menu %>%
       transpose() %>%
@@ -89,7 +95,7 @@ toml_side_navigation <- function(toml_list, blogdown_folder = ".blogdown") {
 
     tbl_tf$id <- str_replace_all(tolower(tbl_tf$main.name), " ", "-")
 
-    content_folder <- path(blogdown_folder, "content")
+    content_folder <- path(project_folder, "content")
 
     actual_doc <- map_chr(
       tbl_tf$main.url, ~ {
@@ -113,7 +119,7 @@ toml_side_navigation <- function(toml_list, blogdown_folder = ".blogdown") {
         }
       }
     )
-    tbl_tf$acutal <- actual_doc
+    tbl_tf$actual <- actual_doc
     pg <- unique(tbl_tf$group)
     sbc <- pg %>%
       map(~ {
@@ -123,7 +129,7 @@ toml_side_navigation <- function(toml_list, blogdown_folder = ".blogdown") {
         lits <- map(transpose(its), ~ {
           nit <- list()
           nit$text <- .x$main.name
-          nit$href <- .x$acutal
+          nit$href <- .x$actual
           nit
         })
         sid <- list(
@@ -136,7 +142,6 @@ toml_side_navigation <- function(toml_list, blogdown_folder = ".blogdown") {
   }
 }
 
-#' @export
 folder_side_navigation <- function(folder = "_site") {
   folder <- "_site"
   index_folder <- ".quarto/index"

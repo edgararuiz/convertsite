@@ -9,11 +9,12 @@ makefile_to_quarto <- function(project_folder = here::here(),
     sub_folders = "docs"
   )
 
-  makefile_setup_file(
-    folder = quarto_folder,
-    makefile_folder = project_folder,
+  ms <- makefile_setup_file(
+    project_folder = project_folder,
     setup_override = setup_override
   )
+
+  save_quarto_yaml(ms, path(quarto_folder, "_quarto.yml"))
 }
 
 #' @export
@@ -47,11 +48,12 @@ blogdown_to_quarto <- function(project_folder = here::here(),
 
   file_move(has_index, new_name)
 
-  blogdown_setup_file(
-    folder = quarto_folder,
-    blogdown_folder = project_folder,
+  bs <- blogdown_setup_file(
+    project_folder = project_folder,
     setup_override = setup_override
   )
+
+  save_quarto_yaml(bs, path(quarto_folder, "_quarto.yml"))
 
   rstudioapi::openProject(quarto_folder)
 }
