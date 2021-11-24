@@ -1,9 +1,6 @@
 #' @export
 blogdown_setup_file <- function(project_folder = here::here(),
-                                setup_override = list()
-                                ) {
-
-
+                                setup_override = list()) {
   toml_file <- path(project_folder, "config.toml")
 
   if (file_exists(toml_file)) {
@@ -20,7 +17,7 @@ blogdown_setup_file <- function(project_folder = here::here(),
   if (!is.null(tf$googleAnalytics) & is.null(qy$site$`google-analytics`)) qy$site$`google-analytics` <- tf$googleAnalytics
 
   sbc <- toml_side_navigation(tf, project_folder = project_folder)
-  if(is.null(sbc)) sbc <- folder_side_navigation()
+  if (is.null(sbc)) sbc <- folder_side_navigation()
   qy$site$sidebar$contents <- sbc
 
   qy
@@ -28,17 +25,16 @@ blogdown_setup_file <- function(project_folder = here::here(),
 
 #' @export
 makefile_setup_file <- function(project_folder = here::here(),
-                                setup_override = list()
-                                ) {
+                                setup_override = list()) {
   raw_mkdocs <- readLines(path(project_folder, "mkdocs.yml"))
 
   filter_docs <- raw_mkdocs[raw_mkdocs != ""]
 
   split_docs <- strsplit(filter_docs, ":")
 
-  line_name <- keep(split_docs, ~.x[1] == "site_name1")
+  line_name <- keep(split_docs, ~ .x[1] == "site_name1")
 
-  if(length(line_name > 1)) {
+  if (length(line_name > 1)) {
     line_name <- line_name[[1]]
     site_name <- paste0(line_name[2:length(line_name)], collapse = "")
   } else {
@@ -64,7 +60,7 @@ save_quarto_yaml <- function(x, location) {
 }
 
 setup_file <- function(setup_override = list(), title = NULL) {
-  if(is.null(title)) title <- "Default"
+  if (is.null(title)) title <- "Default"
   qy <- setup_override
   if (is.null(qy$project$type)) qy$project$type <- "site"
   if (is.null(qy$project$`output-dir`)) qy$project$`output-dir` <- "_site"
@@ -151,7 +147,7 @@ folder_side_navigation <- function(folder = "_site") {
 
   file_list1 <- map(
     json_files,
-    ~{
+    ~ {
       rj <- read_json(.x)
       file_name <- path_ext_remove(path_ext_remove(path_file(.x)))
       file_ext <- path_ext(path_ext_remove(path_file(.x)))
@@ -168,34 +164,34 @@ folder_side_navigation <- function(folder = "_site") {
     }
   )
   file_list <- unname(file_list1)
-  level1 <- sort(unique(map_chr(file_list, ~.x$level1)))
+  level1 <- sort(unique(map_chr(file_list, ~ .x$level1)))
   map(
     level1,
-    ~{
+    ~ {
       lv1 <- .x
-      cl <- keep(file_list, ~.x$level1 == lv1)
-      level2 <- sort(unique(map_chr(cl, ~.x$level2)))
+      cl <- keep(file_list, ~ .x$level1 == lv1)
+      level2 <- sort(unique(map_chr(cl, ~ .x$level2)))
       level2 <- level2[level2 != ""]
       hd <- prepare_level(cl, lv1, "")
       cnt <- map(level2, ~ prepare_level(cl, lv1, .x))
-      if(length(cnt) > 0) hd$contents <- cnt
+      if (length(cnt) > 0) hd$contents <- cnt
       hd
-    })
+    }
+  )
 }
 
 prepare_level <- function(file_list, l1, l2) {
-  cl <- keep(file_list, ~.x$level1 == l1)
+  cl <- keep(file_list, ~ .x$level1 == l1)
   il <- keep(cl, ~ str_detect(.x$href, "index.") && .x$level2 == l2)
   rl <- keep(cl, ~ !str_detect(.x$href, "index.") && .x$level2 == l2)
   newl <- list()
-  if(length(il) == 1) {
+  if (length(il) == 1) {
     newl$section <- il[[1]]$text
     newl$href <- il[[1]]$href
   } else {
     newl$section <- l2
   }
-  al <- map(rl, ~.x[c("text", "href")])
-  if(length(al) > 0) newl$contents <- al
+  al <- map(rl, ~ .x[c("text", "href")])
+  if (length(al) > 0) newl$contents <- al
   newl
 }
-
