@@ -1,5 +1,5 @@
 #' @importFrom stringr str_detect str_replace str_replace_all
-#' @importFrom purrr map map_chr walk map_dfr transpose keep
+#' @importFrom purrr map map_chr walk map_dfr transpose keep map_lgl flatten
 #' @importFrom blogdown read_toml
 #' @importFrom yaml write_yaml read_yaml
 #' @importFrom magrittr `%>%`

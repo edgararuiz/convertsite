@@ -26,34 +26,47 @@ package_reference_index <- function(pkg_folder = "",
   pkg_ref <- pkg$meta$reference
   pkg_topics <- pkg$topics
 
-  alias <- pkg_topics$alias
+  sections_list <- map(
+    pkg_ref, ~ {
+      ref <- .x
+      matched_names <- map_chr(
+        ref$contents,
+        ~ {
+          cr <- .x
+          ma <- map_lgl(pkg_topics$alias, ~ any(cr == .x))
+          pkg_topics$name[ma]
+        }
+      )
+      unique_names <- unique(matched_names)
 
-  ref <- pkg_ref[[4]]
+      refs_html <- map(unique_names, ~ {
+        me <- pkg_topics[pkg_topics$name == .x, ]
+        fns <- me$funs[[1]]
+        if(length(fns) > 0) {
+          fn2 <- paste0("[", fns,"](/", reference_folder, "/", me$file_out,")")
+          fn3 <- paste0(fn2, collapse = " ")
+          fn3 <- paste0(fn3, " | ", me$title)
+        }
+      })
 
-  matched_names <- map_chr(
-    ref$contents,
-    ~ {
-      cr <- .x
-      ma <- map_lgl(alias, ~ any(cr == .x))
-      pkg_topics$name[ma]
-    }
-  )
-  unique_names <- unique(matched_names)
+      null_refs <- map_lgl(refs_html, is.null)
 
-  refs_html <- map(unique_names, ~ {
-    me <- pkg_topics[pkg_topics$name == .x, ]
-    fns <- me$funs[[1]]
-    if(length(fns) > 0) {
-      fn2 <- paste0("[", fns,"](/", reference_folder, "/", me$file_out,")")
-      fn3 <- paste0(fn2, collapse = " ")
-      fn3 <- paste0(fn3, " | ", me$title)
-    }
-  })
+      refs_chr <- refs_html[!null_refs]
 
-  null_refs <- map_lgl(refs_html, is.null)
+      ref_section <- c(
+        paste0("## ", ref$title),
+        "",
+        paste0("Function(s) | Description"),
+        paste0("------------- |----------------"),
+        refs_chr,
+        ""
+      )
 
-  refs_chr <- refs_html[!null_refs]
+    })
 
+  sections_chr <- map_chr(flatten(sections_list), ~.x)
+
+  writeLines(sections_chr, path(reference_folder, "index.md"))
 }
 
 
