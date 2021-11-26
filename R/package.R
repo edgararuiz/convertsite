@@ -13,11 +13,14 @@ package_reference <- function(pkg_folder = "",
     }
   )
 
-  # pkg_location <- package_repo_clone("https://github.com/sparklyr/sparklyr")
-  # pkg <- pkgdown::as_pkgdown(pkg_location)
-  # topics <- transpose(pkg$topics)
-  # out <- parse_topic(topics$ml_decision_tree.Rd)
-  # writeLines(out, "test.md")
+  pkg_location <- convertsite::package_repo_clone("https://github.com/sparklyr/sparklyr")
+  pkg <- pkgdown::as_pkgdown(pkg_location)
+  topics <- purrr::transpose(pkg$topics)
+
+  topic <- topics$ft_binarizer.Rd
+
+  out <- parse_topic(topics$ft_binarizer.Rd)
+  writeLines(out, "test.md")
 
 }
 
@@ -32,7 +35,7 @@ parse_topic <- function(topic) {
     parse_section_arguments(tags$tag_arguments, "## Arguments"),
     parse_section(tags$tag_value, "## Value"),
     parse_section(tags$tag_examples, "## Examples"),
-    parse_section(tags$tag_seealso)
+    parse_section(tags$tag_seealso, "## See Also")
   )
 }
 
@@ -69,6 +72,7 @@ parse_section_arguments <- function(x, title = NULL) {
     NULL
   }
 }
+
 parse_tag <- function(x) {
   tg_res <- map(x, ~{
     lv1 <- .x
@@ -77,7 +81,7 @@ parse_tag <- function(x) {
         res <- parse_line_tag(lv1)
       } else {
         lv2 <- map(lv1, parse_line_tag)
-        res <- paste0(lv2, collapse = " ")
+        res <- paste0(lv2, collapse = "")
       }
       if("tag_dontrun" %in% class(lv1)) res <- paste0("```r\n", res, "\n```")
     } else {
@@ -88,7 +92,7 @@ parse_tag <- function(x) {
   if(all(map_lgl(x, ~ "RCODE" %in% class(.x)))) {
     tg_res <- c("```r", tg_res, "```")
   }
-  paste0(tg_res, collapse = " ")
+  paste0(tg_res, collapse = "")
 }
 
 parse_line_tag <- function(x) {
@@ -102,7 +106,7 @@ parse_line_tag <- function(x) {
     res
   })
   if("tag_item" %in% class(x)) tg_res <- "\n* "
-  paste0(tg_res, collapse = " ")
+  paste0(tg_res, collapse = "")
 }
 
 #' @export
