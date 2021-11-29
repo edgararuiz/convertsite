@@ -1,9 +1,34 @@
 #' @export
+package_readme <- function(pkg_folder = "",
+                           target = "",
+                           file_names = c("readme.md", "readme.Rmd"),
+                           root_folder = here::here()) {
+  package_file_copy(
+    pkg_folder = pkg_folder,
+    target = target,
+    file_names = file_names,
+    root_folder = root_folder
+  )
+}
+
+#' @export
+package_news <- function(pkg_folder = "",
+                         target = "",
+                         file_names = c("news.md", "news.Rmd"),
+                         root_folder = here::here()) {
+  package_file_copy(
+    pkg_folder = pkg_folder,
+    target = target,
+    file_names = file_names,
+    root_folder = root_folder
+  )
+}
+
+#' @export
 package_file_copy <- function(pkg_folder = "",
-                         target = "project_folder",
-                         file_names = c("name.md", "name.Rmd"),
-                         root_folder = here::here()
-                         ) {
+                              target = "project_folder",
+                              file_names = c("name.md", "name.Rmd"),
+                              root_folder = here::here()) {
   file_present <- file_exists(path(pkg_folder, file_names))
   file_numbers <- setNames(file_present, 1:length(file_present))
   file_there <- file_numbers[file_numbers == TRUE]
@@ -19,16 +44,17 @@ package_file_copy <- function(pkg_folder = "",
 
 #' @export
 package_reference <- function(pkg_folder = "",
-                              reference_folder = "reference"
-                              ) {
+                              reference_folder = "reference") {
   pkg <- pkgdown::as_pkgdown(pkg_location)
 
-  package_reference_index(pkg = pkg,
-                          reference_folder = reference_folder
-                          )
+  package_reference_index(
+    pkg = pkg,
+    reference_folder = reference_folder
+  )
 
-  package_reference_pages(pkg = pkg,
-                          reference_folder = reference_folder
+  package_reference_pages(
+    pkg = pkg,
+    reference_folder = reference_folder
   )
 }
 
@@ -36,22 +62,19 @@ package_reference <- function(pkg_folder = "",
 package_reference_pages <- function(pkg_folder = "",
                                     reference_folder = "reference",
                                     root_folder = here::here(),
-                                    pkg = NULL
-                                    ) {
-
-  if(is.null(pkg)) pkg <- pkgdown::as_pkgdown(pkg_location)
+                                    pkg = NULL) {
+  if (is.null(pkg)) pkg <- pkgdown::as_pkgdown(pkg_location)
 
   topics <- purrr::transpose(pkg$topics)
 
   walk(
-    topics, ~{
+    topics, ~ {
       new_name <- path(path_ext_remove(path_file(.x$file_in)), ext = "md")
       print(paste0("Creating: ", new_name))
       out <- parse_topic(.x)
       writeLines(out, path(root_folder, reference_folder, new_name))
     }
   )
-
 }
 
 parse_topic <- function(topic) {
@@ -71,7 +94,7 @@ parse_topic <- function(topic) {
 }
 
 parse_section <- function(x, title = NULL) {
-  if(!is.null(x)) {
+  if (!is.null(x)) {
     c(
       "\n",
       title,
@@ -84,12 +107,12 @@ parse_section <- function(x, title = NULL) {
 }
 
 parse_section_arguments <- function(x, title = NULL) {
-  if(!is.null(x)) {
-    args_p <- map_chr(x[[1]], ~{
+  if (!is.null(x)) {
+    args_p <- map_chr(x[[1]], ~ {
       et <- .x
       paste0(map(et, parse_tag), collapse = " | ")
     })
-    args_ret <- map_lgl(args_p, ~.x != "\n")
+    args_ret <- map_lgl(args_p, ~ .x != "\n")
     c(
       "\n",
       title,
@@ -105,40 +128,39 @@ parse_section_arguments <- function(x, title = NULL) {
 }
 
 parse_tag <- function(x) {
-  tg_res <- map(x, ~{
+  tg_res <- map(x, ~ {
     lv1 <- .x
-    if(length(lv1) > 0) {
-      if(length(lv1) == 1) {
+    if (length(lv1) > 0) {
+      if (length(lv1) == 1) {
         res <- parse_line_tag(lv1)
       } else {
         lv2 <- map(lv1, parse_line_tag)
         res <- paste0(lv2, collapse = "")
-
       }
-      if("tag_code" %in% class(lv1)) res <- paste0("`", res, "`")
-      if("tag_dontrun" %in% class(lv1)) res <- paste0("```r\n", res, "\n```")
+      if ("tag_code" %in% class(lv1)) res <- paste0("`", res, "`")
+      if ("tag_dontrun" %in% class(lv1)) res <- paste0("```r\n", res, "\n```")
     } else {
       res <- ""
     }
     res
   })
-  if(all(map_lgl(x, ~ "RCODE" %in% class(.x)))) {
+  if (all(map_lgl(x, ~ "RCODE" %in% class(.x)))) {
     tg_res <- c("```r", tg_res, "```")
   }
   paste0(tg_res, collapse = "")
 }
 
 parse_line_tag <- function(x) {
-  tg_res <- map(x, ~{
-    if(length(.x) > 0) {
+  tg_res <- map(x, ~ {
+    if (length(.x) > 0) {
       res <- as.character(.x)
-      if("RCODE" %in% class(.x)) res <- paste0("`", res, "`")
+      if ("RCODE" %in% class(.x)) res <- paste0("`", res, "`")
     } else {
       res <- ""
     }
     res
   })
-  if("tag_item" %in% class(x)) tg_res <- "\n* "
+  if ("tag_item" %in% class(x)) tg_res <- "\n* "
   paste0(tg_res, collapse = "")
 }
 
@@ -147,7 +169,7 @@ package_reference_index <- function(pkg_folder = "",
                                     reference_folder = "reference",
                                     root_folder = here::here(),
                                     pkg = NULL) {
-  if(!is.null(pkg)) pkg <- pkgdown::as_pkgdown(pkg_folder)
+  if (!is.null(pkg)) pkg <- pkgdown::as_pkgdown(pkg_folder)
   pkg_ref <- pkg$meta$reference
   pkg_topics <- pkg$topics
 
@@ -197,11 +219,9 @@ package_reference_index <- function(pkg_folder = "",
 
 #' @export
 package_repo_clone_git <- function(url = "",
-                               target_folder = tempdir(),
-                               branch = "main"
-                               ) {
+                                   target_folder = tempdir(),
+                                   branch = "main") {
   tf <- path(target_folder, path_file(url))
   system(paste0("git clone ", url, " -b ", branch, " ", tf))
   tf
 }
-
