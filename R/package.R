@@ -1,6 +1,41 @@
 #' @export
+package_file_copy <- function(pkg_folder = "",
+                         target = "project_folder",
+                         file_names = c("name.md", "name.Rmd"),
+                         root_folder = here::here()
+                         ) {
+  file_present <- file_exists(path(pkg_folder, file_names))
+  file_numbers <- setNames(file_present, 1:length(file_present))
+  file_there <- file_numbers[file_numbers == TRUE]
+  file_min <- min(as.integer(names(file_there)))
+  file_use <- file_present[file_min]
+
+  file_copy(
+    names(file_use),
+    path(root_folder, target),
+    overwrite = TRUE
+  )
+}
+
+#' @export
+package_reference <- function(pkg_folder = "",
+                              reference_folder = "reference"
+                              ) {
+  pkg <- pkgdown::as_pkgdown(pkg_location)
+
+  package_reference_index(pkg = pkg,
+                          reference_folder = reference_folder
+                          )
+
+  package_reference_pages(pkg = pkg,
+                          reference_folder = reference_folder
+  )
+}
+
+#' @export
 package_reference_pages <- function(pkg_folder = "",
                                     reference_folder = "reference",
+                                    root_folder = here::here(),
                                     pkg = NULL
                                     ) {
 
@@ -13,7 +48,7 @@ package_reference_pages <- function(pkg_folder = "",
       new_name <- path(path_ext_remove(path_file(.x$file_in)), ext = "md")
       print(paste0("Creating: ", new_name))
       out <- parse_topic(.x)
-      writeLines(out, here::here(reference_folder, new_name))
+      writeLines(out, path(root_folder, reference_folder, new_name))
     }
   )
 
@@ -110,6 +145,7 @@ parse_line_tag <- function(x) {
 #' @export
 package_reference_index <- function(pkg_folder = "",
                                     reference_folder = "reference",
+                                    root_folder = here::here(),
                                     pkg = NULL) {
   if(!is.null(pkg)) pkg <- pkgdown::as_pkgdown(pkg_folder)
   pkg_ref <- pkg$meta$reference
@@ -155,14 +191,15 @@ package_reference_index <- function(pkg_folder = "",
 
   sections_chr <- map_chr(flatten(sections_list), ~.x)
 
-  writeLines(sections_chr, path(reference_folder, "index.md"))
+  writeLines(sections_chr, path(root_folder, reference_folder, "index.md"))
 }
 
 
 #' @export
-package_repo_clone <- function(url = "",
+package_repo_clone_git <- function(url = "",
                                target_folder = tempdir(),
-                               branch = "main") {
+                               branch = "main"
+                               ) {
   tf <- path(target_folder, path_file(url))
   system(paste0("git clone ", url, " -b ", branch, " ", tf))
   tf
