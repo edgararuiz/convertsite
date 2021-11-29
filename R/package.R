@@ -1,26 +1,21 @@
 #' @export
-package_reference <- function(pkg_folder = "",
-                              reference_folder = "reference",
-                              rd_folder = "man") {
-  walk(
-    dir_ls(path(pkg_folder, rd_folder)),
-    ~ {
-      new_name <- path(path_ext_remove(path_file(.x)), ext = "md")
-      Rd2md::Rd2markdown(
-        .x,
-        here::here(reference_folder, new_name)
-      )
-    }
-  )
+package_reference_pages <- function(pkg_folder = "",
+                                    reference_folder = "reference",
+                                    pkg = NULL
+                                    ) {
 
-  pkg_location <- convertsite::package_repo_clone("https://github.com/sparklyr/sparklyr")
-  pkg <- pkgdown::as_pkgdown(pkg_location)
+  if(is.null(pkg)) pkg <- pkgdown::as_pkgdown(pkg_location)
+
   topics <- purrr::transpose(pkg$topics)
 
-  topic <- topics$ft_binarizer.Rd
-
-  out <- parse_topic(topics$ft_binarizer.Rd)
-  writeLines(out, "test.md")
+  walk(
+    topics, ~{
+      new_name <- path(path_ext_remove(path_file(.x$file_in)), ext = "md")
+      print(paste0("Creating: ", new_name))
+      out <- parse_topic(.x)
+      writeLines(out, here::here(reference_folder, new_name))
+    }
+  )
 
 }
 
@@ -33,6 +28,7 @@ parse_topic <- function(topic) {
     parse_section(tags$tag_description, "## Description"),
     parse_section(tags$tag_usage, "## Usage"),
     parse_section_arguments(tags$tag_arguments, "## Arguments"),
+    parse_section(tags$tag_details, "## Details"),
     parse_section(tags$tag_value, "## Value"),
     parse_section(tags$tag_examples, "## Examples"),
     parse_section(tags$tag_seealso, "## See Also")
@@ -82,7 +78,9 @@ parse_tag <- function(x) {
       } else {
         lv2 <- map(lv1, parse_line_tag)
         res <- paste0(lv2, collapse = "")
+
       }
+      if("tag_code" %in% class(lv1)) res <- paste0("`", res, "`")
       if("tag_dontrun" %in% class(lv1)) res <- paste0("```r\n", res, "\n```")
     } else {
       res <- ""
@@ -112,9 +110,8 @@ parse_line_tag <- function(x) {
 #' @export
 package_reference_index <- function(pkg_folder = "",
                                     reference_folder = "reference",
-                                    rd_folder = "man") {
-  pkg <- pkgdown::as_pkgdown(pkg_folder)
-
+                                    pkg = NULL) {
+  if(!is.null(pkg)) pkg <- pkgdown::as_pkgdown(pkg_folder)
   pkg_ref <- pkg$meta$reference
   pkg_topics <- pkg$topics
 
