@@ -1,4 +1,40 @@
 #' @export
+package_build_documentation <- function(pkg_folder = "",
+                                        project_folder = "",
+                                        root_folder = here::here(),
+                                        readme = TRUE,
+                                        news = TRUE,
+                                        articles = TRUE,
+                                        reference = TRUE
+                                        ) {
+  if(readme) package_readme(pkg_folder = pkg_folder,
+                            root_folder = path(root_folder, project_folder)
+                            )
+  if(news) package_news(pkg_folder = pkg_folder,
+                        root_folder = path(root_folder, project_folder)
+                        )
+
+  if(articles) package_articles(pkg_folder = pkg_folder,
+                                root_folder = path(root_folder, project_folder)
+                                )
+
+  if(reference) package_reference(pkg_folder = pkg_folder,
+                                  root_folder = path(root_folder, project_folder)
+                                  )
+
+}
+#' @export
+package_articles <- function(pkg_folder = "",
+                             source = "vignettes",
+                             target = "articles",
+                             root_folder = here::here()) {
+  full_file_copy(
+    path(pkg_folder, source),
+    path(root_folder, target)
+  )
+}
+
+#' @export
 package_readme <- function(pkg_folder = "",
                            target = "",
                            file_names = c("readme.md", "readme.Rmd"),
