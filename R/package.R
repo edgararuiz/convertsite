@@ -41,6 +41,10 @@ package_build_documentation <- function(pkg_folder = "",
 
 }
 
+#' Copies the vignettes into Quarto
+#' @inheritParams package_build_documentation
+#' @param source Sub-folder location where the vignettes are available
+#' @param target Sub-folder location to place the articles in Quarto
 #' @export
 package_articles <- function(pkg_folder = "",
                              source = "vignettes",
@@ -63,6 +67,7 @@ package_articles <- function(pkg_folder = "",
   }
 }
 
+#' @rdname package_reference_pages
 #' @export
 package_reference <- function(pkg_folder = "",
                               root_folder = here::here(),
@@ -89,8 +94,13 @@ package_reference <- function(pkg_folder = "",
   )
 }
 
+#' Download the package's latest source code from repo
+#' @param url Repo location
+#' @param target_folder Location to copy the package to. Defaults to a temporary
+#' directory
+#' @param branch Repo branch. Defaults to 'main'
 #' @export
-package_repo_clone_git <- function(url = "",
+package_clone_git_repo <- function(url = "",
                                    target_folder = tempdir(),
                                    branch = "main") {
   tf <- path(target_folder, path_file(url))

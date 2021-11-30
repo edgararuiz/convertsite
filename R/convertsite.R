@@ -4,7 +4,9 @@
 #' @importFrom yaml write_yaml read_yaml
 #' @importFrom magrittr `%>%`
 #' @importFrom jsonlite read_json
+#' @importFrom pkgdown as_pkgdown
 #' @importFrom rstudioapi openProject
+#' @importFrom stats setNames
 #' @import crayon
 #' @import here
 #' @import fs

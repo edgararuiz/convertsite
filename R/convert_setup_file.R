@@ -1,3 +1,6 @@
+#' Converts existing setup file to Quarto setup file
+#'
+#' @inheritParams makefile_to_quarto
 #' @export
 blogdown_setup_file <- function(project_folder = here::here(),
                                 setup_override = list()) {
@@ -23,6 +26,7 @@ blogdown_setup_file <- function(project_folder = here::here(),
   qy
 }
 
+#' @rdname blogdown_setup_file
 #' @export
 makefile_setup_file <- function(project_folder = here::here(),
                                 setup_override = list()) {
@@ -51,6 +55,10 @@ makefile_setup_file <- function(project_folder = here::here(),
   qy
 }
 
+#' Saves YAML file
+#' @details It replaces 'yes' with 'true'
+#' @param x yaml object
+#' @param location Path to where to save the new file
 #' @export
 save_quarto_yaml <- function(x, location) {
   write_yaml(x, location)

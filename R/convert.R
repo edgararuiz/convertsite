@@ -1,3 +1,11 @@
+#' Converts the current site to a Quarto site
+#'
+#' @param project_folder Root folder location of the original site
+#' @param quarto_folder Target of new Quarto site. It defaults to a new project
+#' folder with the same name as the `project_folder`, but with "_quarto" suffixed
+#' to it.
+#' @param setup_override A list of Quarto settings to be used at conversion
+#'
 #' @export
 makefile_to_quarto <- function(project_folder = here::here(),
                                quarto_folder = new_quarto_folder(),
@@ -16,13 +24,7 @@ makefile_to_quarto <- function(project_folder = here::here(),
   save_quarto_yaml(ms, path(quarto_folder, "_quarto.yml"))
 }
 
-#' @export
-new_quarto_folder <- function(home_folder = path_dir(here::here()),
-                              project_name = path_file(here::here()),
-                              new_name = paste0(project_name, "_quarto")) {
-  path(home_folder, new_name)
-}
-
+#' @rdname makefile_to_quarto
 #' @export
 blogdown_to_quarto <- function(project_folder = here::here(),
                                quarto_folder = new_quarto_folder(),
@@ -55,7 +57,12 @@ blogdown_to_quarto <- function(project_folder = here::here(),
   rstudioapi::openProject(quarto_folder)
 }
 
-#' @export
+new_quarto_folder <- function(home_folder = path_dir(here::here()),
+                              project_name = path_file(here::here()),
+                              new_name = paste0(project_name, "_quarto")) {
+  path(home_folder, new_name)
+}
+
 convert_to_quarto <- function(project_folder = here::here(),
                               quarto_folder = new_quarto_folder(),
                               sub_folders = c("content", "static")) {
