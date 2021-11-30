@@ -10,7 +10,7 @@ package_reference_index <- function(pkg_folder = "",
   pkg_topics <- pkg$topics
 
   # For packages that do not have a _pkgdown.yml spec
-  if(is.null(pkg_ref)) pkg_ref <- list(data.frame(contents = pkg_topics$name))
+  if (is.null(pkg_ref)) pkg_ref <- list(data.frame(contents = pkg_topics$name))
 
 
   sections_list <- map(

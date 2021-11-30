@@ -14,31 +14,40 @@ package_build_documentation <- function(pkg_folder = "",
                                         readme = TRUE,
                                         news = TRUE,
                                         articles = TRUE,
-                                        reference = TRUE
-                                        ) {
+                                        reference = TRUE) {
+  if (readme | news) msg_bold_blue("- - - - - - - Top files - - - - - - - - -")
 
-  if(readme | news) msg_bold_blue("- - - - - - - Top files - - - - - - - - -")
+  if (readme) {
+    package_readme(
+      pkg_folder = pkg_folder,
+      project_folder = project_folder,
+      root_folder = root_folder
+    )
+  }
 
-  if(readme) package_readme(pkg_folder = pkg_folder,
-                            project_folder = project_folder,
-                            root_folder = root_folder
-                            )
+  if (news) {
+    package_news(
+      pkg_folder = pkg_folder,
+      project_folder = project_folder,
+      root_folder = root_folder
+    )
+  }
 
-  if(news) package_news(pkg_folder = pkg_folder,
-                        project_folder = project_folder,
-                        root_folder = root_folder
-                        )
+  if (articles) {
+    package_articles(
+      pkg_folder = pkg_folder,
+      project_folder = project_folder,
+      root_folder = root_folder
+    )
+  }
 
-  if(articles) package_articles(pkg_folder = pkg_folder,
-                                project_folder = project_folder,
-                                root_folder = root_folder
-                                )
-
-  if(reference) package_reference(pkg_folder = pkg_folder,
-                                  project_folder = project_folder,
-                                  root_folder = root_folder
-                                  )
-
+  if (reference) {
+    package_reference(
+      pkg_folder = pkg_folder,
+      project_folder = project_folder,
+      root_folder = root_folder
+    )
+  }
 }
 
 #' Copies the vignettes into Quarto
@@ -51,12 +60,11 @@ package_articles <- function(pkg_folder = "",
                              target = "articles",
                              project_folder = "",
                              root_folder = here::here()) {
-
   msg_bold_blue("- - - - - - Article files - - - - - - - -")
 
   a_folder <- path(pkg_folder, source)
 
-  if(dir_exists(a_folder)) {
+  if (dir_exists(a_folder)) {
     full_file_copy(
       a_folder,
       path(root_folder, project_folder, target)

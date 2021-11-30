@@ -37,5 +37,5 @@ sanitized_file_list <- function(folder, exclude_exts = NULL) {
 }
 
 create_folder_if_missing <- function(x) {
-  if(!dir_exists(x)) dir_create(x)
+  if (!dir_exists(x)) dir_create(x)
 }

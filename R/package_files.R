@@ -1,9 +1,6 @@
 #' Copies individual files from package to Quarto
 #'
-#' @param pkg_folder Path to the package's source code
-#' @param root_folder Base target Quarto folder. Defaults to current workspace.
-#' @param project_folder Sub folder in `root_folder` that will be the base for
-#' the package's documentation.
+#' @inheritParams package_build_documentation
 #' @param target Sub folder in `project_folder` where the output file will land
 #' @param file_names A vector of one or many file names. If it is multiple files
 #' the function will look for and use the first available.
@@ -49,7 +46,6 @@ package_file_copy <- function(pkg_folder = "",
                               override_name = NULL,
                               project_folder = "",
                               root_folder = here::here()) {
-
   file_present <- file_exists(path(pkg_folder, file_names))
   file_numbers <- setNames(file_present, 1:length(file_present))
   file_there <- file_numbers[file_numbers == TRUE]
