@@ -5,6 +5,7 @@
 #' @importFrom magrittr `%>%`
 #' @importFrom jsonlite read_json
 #' @importFrom rstudioapi openProject
+#' @import crayon
 #' @import here
 #' @import fs
 NULL

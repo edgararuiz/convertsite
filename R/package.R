@@ -8,6 +8,8 @@ package_build_documentation <- function(pkg_folder = "",
                                         reference = TRUE
                                         ) {
 
+  if(readme | news) msg_bold_blue("- - - - - - - Top files - - - - - - - - -")
+
   if(readme) package_readme(pkg_folder = pkg_folder,
                             project_folder = project_folder,
                             root_folder = root_folder
@@ -29,16 +31,27 @@ package_build_documentation <- function(pkg_folder = "",
                                   )
 
 }
+
 #' @export
 package_articles <- function(pkg_folder = "",
                              source = "vignettes",
                              target = "articles",
                              project_folder = "",
                              root_folder = here::here()) {
-  full_file_copy(
-    path(pkg_folder, source),
-    path(root_folder, project_folder, target)
-  )
+
+  msg_bold_blue("- - - - - - Article files - - - - - - - -")
+
+  a_folder <- path(pkg_folder, source)
+
+  if(dir_exists(a_folder)) {
+    full_file_copy(
+      a_folder,
+      path(root_folder, project_folder, target)
+    )
+    msg_green("Vignette folder copied to", path(project_folder, target))
+  } else {
+    msg_yellow("Vignette folder not found")
+  }
 }
 
 #' @export
@@ -98,6 +111,7 @@ package_file_copy <- function(pkg_folder = "",
     path(dest_folder, file_n),
     overwrite = TRUE
   )
+  msg_green("Copied: ", path(project_folder, target, file_n))
 }
 
 #' @export
@@ -106,6 +120,8 @@ package_reference <- function(pkg_folder = "",
                               project_folder = "",
                               reference_folder = "reference") {
   pkg <- pkgdown::as_pkgdown(pkg_folder)
+
+  msg_bold_blue("- - - - - - Reference files - - - - - - -")
 
   create_folder_if_missing(path(root_folder, project_folder, reference_folder))
 
@@ -137,9 +153,10 @@ package_reference_pages <- function(pkg_folder = "",
   walk(
     topics, ~ {
       new_name <- path(path_ext_remove(path_file(.x$file_in)), ext = "md")
-      print(paste0("Creating: ", new_name))
+      f_name <- path(project_folder, reference_folder, new_name)
       out <- parse_topic(.x)
-      writeLines(out, path(root_folder, project_folder, reference_folder, new_name))
+      writeLines(out, path(root_folder, f_name))
+      msg_green("Created: ", f_name)
     }
   )
 }
@@ -286,10 +303,13 @@ package_reference_index <- function(pkg_folder = "",
 
   sections_chr <- map_chr(flatten(sections_list), ~.x)
 
+  index_file <- path(project_folder, reference_folder, "index.md")
+
   writeLines(
     sections_chr,
-    path(root_folder, project_folder, reference_folder, "index.md")
+    path(root_folder, index_file)
     )
+  msg_green("Created: ", index_file)
 }
 
 
