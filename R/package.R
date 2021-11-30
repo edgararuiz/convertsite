@@ -7,19 +7,25 @@ package_build_documentation <- function(pkg_folder = "",
                                         articles = TRUE,
                                         reference = TRUE
                                         ) {
+
   if(readme) package_readme(pkg_folder = pkg_folder,
-                            root_folder = path(root_folder, project_folder)
+                            project_folder = project_folder,
+                            root_folder = root_folder
                             )
+
   if(news) package_news(pkg_folder = pkg_folder,
-                        root_folder = path(root_folder, project_folder)
+                        project_folder = project_folder,
+                        root_folder = root_folder
                         )
 
   if(articles) package_articles(pkg_folder = pkg_folder,
-                                root_folder = path(root_folder, project_folder)
+                                project_folder = project_folder,
+                                root_folder = root_folder
                                 )
 
   if(reference) package_reference(pkg_folder = pkg_folder,
-                                  root_folder = path(root_folder, project_folder)
+                                  project_folder = project_folder,
+                                  root_folder = root_folder
                                   )
 
 }
@@ -27,22 +33,26 @@ package_build_documentation <- function(pkg_folder = "",
 package_articles <- function(pkg_folder = "",
                              source = "vignettes",
                              target = "articles",
+                             project_folder = "",
                              root_folder = here::here()) {
   full_file_copy(
     path(pkg_folder, source),
-    path(root_folder, target)
+    path(root_folder, project_folder, target)
   )
 }
 
 #' @export
 package_readme <- function(pkg_folder = "",
                            target = "",
-                           file_names = c("readme.md", "readme.Rmd"),
+                           file_names = c("readme.md"),
+                           project_folder = "",
                            root_folder = here::here()) {
   package_file_copy(
     pkg_folder = pkg_folder,
     target = target,
     file_names = file_names,
+    override_name = "index.md",
+    project_folder = project_folder,
     root_folder = root_folder
   )
 }
@@ -51,11 +61,13 @@ package_readme <- function(pkg_folder = "",
 package_news <- function(pkg_folder = "",
                          target = "",
                          file_names = c("news.md", "news.Rmd"),
+                         project_folder = "",
                          root_folder = here::here()) {
   package_file_copy(
     pkg_folder = pkg_folder,
     target = target,
     file_names = file_names,
+    project_folder = project_folder,
     root_folder = root_folder
   )
 }
@@ -64,32 +76,50 @@ package_news <- function(pkg_folder = "",
 package_file_copy <- function(pkg_folder = "",
                               target = "project_folder",
                               file_names = c("name.md", "name.Rmd"),
+                              override_name = NULL,
+                              project_folder = "",
                               root_folder = here::here()) {
+
   file_present <- file_exists(path(pkg_folder, file_names))
   file_numbers <- setNames(file_present, 1:length(file_present))
   file_there <- file_numbers[file_numbers == TRUE]
   file_min <- min(as.integer(names(file_there)))
   file_use <- file_present[file_min]
+  file_name <- names(file_use)
+
+  dest_folder <- path(root_folder, project_folder, target)
+
+  create_folder_if_missing(dest_folder)
+
+  file_n <- ifelse(is.null(override_name), path_file(file_name), override_name)
 
   file_copy(
-    names(file_use),
-    path(root_folder, target),
+    file_name,
+    path(dest_folder, file_n),
     overwrite = TRUE
   )
 }
 
 #' @export
 package_reference <- function(pkg_folder = "",
+                              root_folder = here::here(),
+                              project_folder = "",
                               reference_folder = "reference") {
-  pkg <- pkgdown::as_pkgdown(pkg_location)
+  pkg <- pkgdown::as_pkgdown(pkg_folder)
+
+  create_folder_if_missing(path(root_folder, project_folder, reference_folder))
 
   package_reference_index(
     pkg = pkg,
+    project_folder = project_folder,
+    root_folder = root_folder,
     reference_folder = reference_folder
   )
 
   package_reference_pages(
     pkg = pkg,
+    project_folder = project_folder,
+    root_folder = root_folder,
     reference_folder = reference_folder
   )
 }
@@ -97,9 +127,10 @@ package_reference <- function(pkg_folder = "",
 #' @export
 package_reference_pages <- function(pkg_folder = "",
                                     reference_folder = "reference",
+                                    project_folder = "",
                                     root_folder = here::here(),
                                     pkg = NULL) {
-  if (is.null(pkg)) pkg <- pkgdown::as_pkgdown(pkg_location)
+  if (is.null(pkg)) pkg <- pkgdown::as_pkgdown(pkg_folder)
 
   topics <- purrr::transpose(pkg$topics)
 
@@ -108,7 +139,7 @@ package_reference_pages <- function(pkg_folder = "",
       new_name <- path(path_ext_remove(path_file(.x$file_in)), ext = "md")
       print(paste0("Creating: ", new_name))
       out <- parse_topic(.x)
-      writeLines(out, path(root_folder, reference_folder, new_name))
+      writeLines(out, path(root_folder, project_folder, reference_folder, new_name))
     }
   )
 }
@@ -203,11 +234,16 @@ parse_line_tag <- function(x) {
 #' @export
 package_reference_index <- function(pkg_folder = "",
                                     reference_folder = "reference",
+                                    project_folder = "",
                                     root_folder = here::here(),
                                     pkg = NULL) {
-  if (!is.null(pkg)) pkg <- pkgdown::as_pkgdown(pkg_folder)
+  if (is.null(pkg)) pkg <- pkgdown::as_pkgdown(pkg_folder)
   pkg_ref <- pkg$meta$reference
   pkg_topics <- pkg$topics
+
+  # For packages that do not have a _pkgdown.yml spec
+  if(is.null(pkg_ref)) pkg_ref <- list(data.frame(contents = pkg_topics$name))
+
 
   sections_list <- map(
     pkg_ref, ~ {
@@ -226,7 +262,8 @@ package_reference_index <- function(pkg_folder = "",
         me <- pkg_topics[pkg_topics$name == .x, ]
         fns <- me$funs[[1]]
         if (length(fns) > 0) {
-          fn2 <- paste0("[", fns, "](/", reference_folder, "/", me$file_out, ")")
+          n_path <- path("/", project_folder, reference_folder, "/", me$file_out)
+          fn2 <- paste0("[", fns, "](", n_path, ")")
           fn3 <- paste0(fn2, collapse = " ")
           fn3 <- paste0(fn3, " | ", me$title)
         }
@@ -237,7 +274,7 @@ package_reference_index <- function(pkg_folder = "",
       refs_chr <- refs_html[!null_refs]
 
       ref_section <- c(
-        paste0("## ", ref$title),
+        ifelse(!is.null(ref$title), paste0("## ", ref$title), ""),
         "",
         paste0("Function(s) | Description"),
         paste0("------------- |----------------"),
@@ -249,7 +286,10 @@ package_reference_index <- function(pkg_folder = "",
 
   sections_chr <- map_chr(flatten(sections_list), ~.x)
 
-  writeLines(sections_chr, path(root_folder, reference_folder, "index.md"))
+  writeLines(
+    sections_chr,
+    path(root_folder, project_folder, reference_folder, "index.md")
+    )
 }
 
 
