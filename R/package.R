@@ -1,3 +1,12 @@
+#' Copies and/or converts files from package source into Quarto
+#' @param pkg_folder Path to the package's source code
+#' @param root_folder Base target Quarto folder. Defaults to current workspace.
+#' @param project_folder Sub folder in `root_folder` that will be the base for
+#' the package's documentation.
+#' @param readme Flag that indicates of the README file needs to be processed
+#' @param news Flag that indicates of the NEWS file needs to be processed
+#' @param articles Flag that indicates of the vignette files needs to be processed
+#' @param reference Flag that indicates of the help files needs to be processed
 #' @export
 package_build_documentation <- function(pkg_folder = "",
                                         project_folder = "",
@@ -52,66 +61,6 @@ package_articles <- function(pkg_folder = "",
   } else {
     msg_yellow("Vignette folder not found")
   }
-}
-
-#' @export
-package_readme <- function(pkg_folder = "",
-                           target = "",
-                           file_names = c("readme.md"),
-                           project_folder = "",
-                           root_folder = here::here()) {
-  package_file_copy(
-    pkg_folder = pkg_folder,
-    target = target,
-    file_names = file_names,
-    override_name = "index.md",
-    project_folder = project_folder,
-    root_folder = root_folder
-  )
-}
-
-#' @export
-package_news <- function(pkg_folder = "",
-                         target = "",
-                         file_names = c("news.md", "news.Rmd"),
-                         project_folder = "",
-                         root_folder = here::here()) {
-  package_file_copy(
-    pkg_folder = pkg_folder,
-    target = target,
-    file_names = file_names,
-    project_folder = project_folder,
-    root_folder = root_folder
-  )
-}
-
-#' @export
-package_file_copy <- function(pkg_folder = "",
-                              target = "project_folder",
-                              file_names = c("name.md", "name.Rmd"),
-                              override_name = NULL,
-                              project_folder = "",
-                              root_folder = here::here()) {
-
-  file_present <- file_exists(path(pkg_folder, file_names))
-  file_numbers <- setNames(file_present, 1:length(file_present))
-  file_there <- file_numbers[file_numbers == TRUE]
-  file_min <- min(as.integer(names(file_there)))
-  file_use <- file_present[file_min]
-  file_name <- names(file_use)
-
-  dest_folder <- path(root_folder, project_folder, target)
-
-  create_folder_if_missing(dest_folder)
-
-  file_n <- ifelse(is.null(override_name), path_file(file_name), override_name)
-
-  file_copy(
-    file_name,
-    path(dest_folder, file_n),
-    overwrite = TRUE
-  )
-  msg_green("Copied: ", path(project_folder, target, file_n))
 }
 
 #' @export

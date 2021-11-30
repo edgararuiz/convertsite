@@ -1,3 +1,4 @@
+#' @rdname package_reference_pages
 #' @export
 package_reference_index <- function(pkg_folder = "",
                                     reference_folder = "reference",

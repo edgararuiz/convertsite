@@ -1,3 +1,12 @@
+#' Processes reference/help files
+#' @param pkg_folder Path to the package's source code
+#' @param root_folder Base target Quarto folder. Defaults to current workspace.
+#' @param project_folder Sub folder in `root_folder` that will be the base for
+#' the package's documentation.
+#' @param reference_folder Sub folder in `project_folder` where the output files
+#' will land.
+#' @param pkg A `pkgdown` object. If one is passed, then the `pkg_folder` argument
+#' will be ignored
 #' @export
 package_reference_pages <- function(pkg_folder = "",
                                     reference_folder = "reference",
